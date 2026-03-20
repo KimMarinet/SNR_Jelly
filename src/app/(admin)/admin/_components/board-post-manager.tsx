@@ -134,6 +134,17 @@ export function BoardPostManager({
   }
 
   async function deactivateBoard(boardId: number) {
+    const targetBoard = activeBoards.find((board) => board.id === boardId);
+    const boardTitle = targetBoard?.title ?? "선택한 게시판";
+
+    const shouldDeactivate = window.confirm(
+      `"${boardTitle}" 게시판을 비활성화하시겠습니까?\n비활성 게시판 영역에서 다시 복구할 수 있습니다.`,
+    );
+
+    if (!shouldDeactivate) {
+      return;
+    }
+
     setMutatingBoardId(boardId);
     onStatus("");
     try {
@@ -508,6 +519,13 @@ function BoardColumn({
 }: BoardColumnProps) {
   return (
     <div className="space-y-3">
+      <h3
+        className={`text-sm font-semibold uppercase tracking-wide ${
+          tone === "active" ? "text-emerald-200" : "text-amber-200"
+        }`}
+      >
+        {label}
+      </h3>
       {boards.length === 0 ? (
         <p className="rounded-xl border border-white/10 bg-black/20 px-4 py-6 text-center text-sm text-zinc-500">
           게시판이 없습니다.

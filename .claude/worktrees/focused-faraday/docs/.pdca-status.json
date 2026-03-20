@@ -1,0 +1,115 @@
+{
+  "version": "2.0",
+  "lastUpdated": "2026-03-20T01:25:52.394Z",
+  "activeFeatures": [
+    "(admin)",
+    "_components"
+  ],
+  "primaryFeature": "(admin)",
+  "features": {
+    "(admin)": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-20T01:10:29.379Z",
+        "lastUpdated": "2026-03-20T01:10:29.379Z"
+      },
+      "lastFile": "/c/Users/kiana/Desktop/DK/SNR_homepage/src/app/(admin)/layout.tsx"
+    },
+    "_components": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-20T01:10:54.208Z",
+        "lastUpdated": "2026-03-20T01:25:52.394Z"
+      },
+      "lastFile": "/c/Users/kiana/Desktop/DK/SNR_homepage/src/app/(admin)/admin/_components/board-post-manager.tsx"
+    }
+  },
+  "pipeline": {
+    "currentPhase": 1,
+    "level": "Dynamic",
+    "phaseHistory": []
+  },
+  "session": {
+    "startedAt": "2026-03-20T01:07:57.538Z",
+    "onboardingCompleted": false,
+    "lastActivity": "2026-03-20T01:25:52.394Z"
+  },
+  "history": [
+    {
+      "timestamp": "2026-03-20T01:10:29.379Z",
+      "feature": "(admin)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T01:10:54.208Z",
+      "feature": "_components",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T01:11:12.153Z",
+      "feature": "_components",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T01:11:14.911Z",
+      "feature": "_components",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T01:17:14.611Z",
+      "feature": "_components",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T01:17:24.245Z",
+      "feature": "_components",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T01:22:10.137Z",
+      "feature": "_components",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T01:22:42.059Z",
+      "feature": "_components",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T01:22:52.852Z",
+      "feature": "_components",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T01:23:01.138Z",
+      "feature": "_components",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T01:25:52.394Z",
+      "feature": "_components",
+      "phase": "do",
+      "action": "updated"
+    }
+  ]
+}
