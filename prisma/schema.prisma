@@ -8,6 +8,12 @@ datasource db {
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
+enum AssetCategory {
+  CHARACTER
+  SKILL
+  COMMON
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -31,16 +37,35 @@ model Board {
 }
 
 model Post {
-  id        Int      @id @default(autoincrement())
-  boardId   Int
-  authorId  Int
-  title     String
-  content   String   @db.LongText
-  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          Int       @id @default(autoincrement())
+  boardId     Int
+  authorId    Int
+  title       String
+  content     String    @db.LongText
+  isPublished Boolean   @default(true)
+  deletedAt   DateTime?
+  board       Board     @relation(fields: [boardId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([boardId])
   @@index([authorId])
+  @@index([isPublished, deletedAt])
+}
+
+model Asset {
+  id           Int           @id @default(autoincrement())
+  category     AssetCategory @default(COMMON)
+  originalName String
+  storedName   String        @unique
+  mimeType     String
+  size         Int
+  filePath     String
+  publicUrl    String
+  deletedAt    DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([category, deletedAt])
 }
