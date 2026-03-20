@@ -258,73 +258,133 @@ export function BoardPostManager({
   }
 
   return (
-    <section className="rounded-2xl border border-white/15 bg-black/30 p-5">
-      <h2 className="text-lg font-semibold text-white">게시판 / 게시글 관리</h2>
-
-      <form onSubmit={createBoard} className="mt-4 grid gap-3 md:grid-cols-4">
-        <input value={newBoard.title} onChange={(e) => setNewBoard((p) => ({ ...p, title: e.target.value }))} placeholder="게시판 이름" required className="rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none" />
-        <input value={newBoard.slug} onChange={(e) => setNewBoard((p) => ({ ...p, slug: e.target.value.trim().toLowerCase() }))} placeholder="슬러그" required className="rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none" />
-        <input value={newBoard.description} onChange={(e) => setNewBoard((p) => ({ ...p, description: e.target.value }))} placeholder="설명 (선택)" className="rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none" />
-        <div className="flex gap-2">
-          <input type="number" value={newBoard.order} onChange={(e) => setNewBoard((p) => ({ ...p, order: e.target.value }))} className="w-24 rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none" />
-          <button type="submit" disabled={creating} className="flex-1 rounded-xl bg-gradient-to-r from-emerald-300 to-cyan-300 px-4 py-2 text-sm font-semibold text-zinc-950 disabled:cursor-not-allowed disabled:opacity-70">{creating ? "생성 중..." : "게시판 생성"}</button>
+    <div className="space-y-6">
+      {/* ── 섹션 A : 게시판 생성 ── */}
+      <section className="rounded-2xl border border-emerald-400/20 bg-emerald-400/5">
+        {/* 섹션 헤더 */}
+        <div className="flex items-center gap-3 border-b border-emerald-400/15 px-6 py-4">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-400/15 text-sm text-emerald-300">
+            ＋
+          </span>
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400">
+              New Board
+            </p>
+            <h2 className="text-sm font-semibold text-white">게시판 생성</h2>
+          </div>
         </div>
-      </form>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <BoardColumn
-          label={`활성 게시판 (${sortedActiveBoards.length})`}
-          tone="active"
-          boards={sortedActiveBoards}
-          savingBoardId={savingBoardId}
-          mutatingBoardId={mutatingBoardId}
-          postPanels={postPanels}
-          onEdit={(id, key, value) => editBoard(id, key, value, true)}
-          onSave={(board) => saveBoard(board, true)}
-          onDeactivate={deactivateBoard}
-          onLoadPosts={loadPosts}
-          onTogglePostPublish={(boardId, post) =>
-            mutatePost(boardId, post.id, {
-              method: "PATCH",
-              body: { action: "toggle-publish", isPublished: !post.isPublished },
-            })
-          }
-          onTrashPost={(boardId, post) =>
-            mutatePost(boardId, post.id, { method: "PATCH", body: { action: "trash" } })
-          }
-          onRestorePost={(boardId, post) =>
-            mutatePost(boardId, post.id, { method: "PATCH", body: { action: "restore" } })
-          }
-          onDeletePost={(boardId, post) => mutatePost(boardId, post.id, { method: "DELETE" })}
-        />
-        <BoardColumn
-          label={`비활성 게시판 (${sortedInactiveBoards.length})`}
-          tone="inactive"
-          boards={sortedInactiveBoards}
-          savingBoardId={savingBoardId}
-          mutatingBoardId={mutatingBoardId}
-          postPanels={postPanels}
-          onEdit={(id, key, value) => editBoard(id, key, value, false)}
-          onSave={(board) => saveBoard(board, false)}
-          onRestore={restoreBoard}
-          onHardDelete={hardDeleteBoard}
-          onLoadPosts={loadPosts}
-          onTogglePostPublish={(boardId, post) =>
-            mutatePost(boardId, post.id, {
-              method: "PATCH",
-              body: { action: "toggle-publish", isPublished: !post.isPublished },
-            })
-          }
-          onTrashPost={(boardId, post) =>
-            mutatePost(boardId, post.id, { method: "PATCH", body: { action: "trash" } })
-          }
-          onRestorePost={(boardId, post) =>
-            mutatePost(boardId, post.id, { method: "PATCH", body: { action: "restore" } })
-          }
-          onDeletePost={(boardId, post) => mutatePost(boardId, post.id, { method: "DELETE" })}
-        />
-      </div>
-    </section>
+        {/* 생성 폼 */}
+        <form onSubmit={createBoard} className="grid gap-3 px-6 py-5 md:grid-cols-4">
+          <input
+            value={newBoard.title}
+            onChange={(e) => setNewBoard((p) => ({ ...p, title: e.target.value }))}
+            placeholder="게시판 이름"
+            required
+            className="rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none focus:border-emerald-400/50"
+          />
+          <input
+            value={newBoard.slug}
+            onChange={(e) => setNewBoard((p) => ({ ...p, slug: e.target.value.trim().toLowerCase() }))}
+            placeholder="슬러그"
+            required
+            className="rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none focus:border-emerald-400/50"
+          />
+          <input
+            value={newBoard.description}
+            onChange={(e) => setNewBoard((p) => ({ ...p, description: e.target.value }))}
+            placeholder="설명 (선택)"
+            className="rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none focus:border-emerald-400/50"
+          />
+          <div className="flex gap-2">
+            <input
+              type="number"
+              value={newBoard.order}
+              onChange={(e) => setNewBoard((p) => ({ ...p, order: e.target.value }))}
+              className="w-24 rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none focus:border-emerald-400/50"
+            />
+            <button
+              type="submit"
+              disabled={creating}
+              className="flex-1 rounded-xl bg-gradient-to-r from-emerald-300 to-cyan-300 px-4 py-2 text-sm font-semibold text-zinc-950 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {creating ? "생성 중..." : "게시판 생성"}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      {/* ── 섹션 B : 게시판 관리 ── */}
+      <section className="rounded-2xl border border-white/10 bg-black/25">
+        {/* 섹션 헤더 */}
+        <div className="flex items-center gap-3 border-b border-white/10 px-6 py-4">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/8 text-sm text-slate-300">
+            ☰
+          </span>
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+              Board Management
+            </p>
+            <h2 className="text-sm font-semibold text-white">게시판 관리</h2>
+          </div>
+        </div>
+
+        {/* 게시판 컬럼 */}
+        <div className="grid gap-6 px-6 py-5 lg:grid-cols-2">
+          <BoardColumn
+            label={`활성 게시판 (${sortedActiveBoards.length})`}
+            tone="active"
+            boards={sortedActiveBoards}
+            savingBoardId={savingBoardId}
+            mutatingBoardId={mutatingBoardId}
+            postPanels={postPanels}
+            onEdit={(id, key, value) => editBoard(id, key, value, true)}
+            onSave={(board) => saveBoard(board, true)}
+            onDeactivate={deactivateBoard}
+            onLoadPosts={loadPosts}
+            onTogglePostPublish={(boardId, post) =>
+              mutatePost(boardId, post.id, {
+                method: "PATCH",
+                body: { action: "toggle-publish", isPublished: !post.isPublished },
+              })
+            }
+            onTrashPost={(boardId, post) =>
+              mutatePost(boardId, post.id, { method: "PATCH", body: { action: "trash" } })
+            }
+            onRestorePost={(boardId, post) =>
+              mutatePost(boardId, post.id, { method: "PATCH", body: { action: "restore" } })
+            }
+            onDeletePost={(boardId, post) => mutatePost(boardId, post.id, { method: "DELETE" })}
+          />
+          <BoardColumn
+            label={`비활성 게시판 (${sortedInactiveBoards.length})`}
+            tone="inactive"
+            boards={sortedInactiveBoards}
+            savingBoardId={savingBoardId}
+            mutatingBoardId={mutatingBoardId}
+            postPanels={postPanels}
+            onEdit={(id, key, value) => editBoard(id, key, value, false)}
+            onSave={(board) => saveBoard(board, false)}
+            onRestore={restoreBoard}
+            onHardDelete={hardDeleteBoard}
+            onLoadPosts={loadPosts}
+            onTogglePostPublish={(boardId, post) =>
+              mutatePost(boardId, post.id, {
+                method: "PATCH",
+                body: { action: "toggle-publish", isPublished: !post.isPublished },
+              })
+            }
+            onTrashPost={(boardId, post) =>
+              mutatePost(boardId, post.id, { method: "PATCH", body: { action: "trash" } })
+            }
+            onRestorePost={(boardId, post) =>
+              mutatePost(boardId, post.id, { method: "PATCH", body: { action: "restore" } })
+            }
+            onDeletePost={(boardId, post) => mutatePost(boardId, post.id, { method: "DELETE" })}
+          />
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -371,8 +431,25 @@ function BoardColumn({
 }: BoardColumnProps) {
   return (
     <div className="space-y-3">
-      <h3 className={`text-sm font-semibold uppercase tracking-wide ${tone === "active" ? "text-emerald-200" : "text-amber-200"}`}>{label}</h3>
-      {boards.length === 0 ? <p className="rounded-xl border border-white/15 bg-black/35 px-4 py-3 text-sm text-zinc-300">게시판이 없습니다.</p> : null}
+      <h3
+        className={[
+          "flex items-center gap-2 pb-2 text-xs font-semibold uppercase tracking-widest",
+          tone === "active" ? "text-emerald-300" : "text-amber-300",
+        ].join(" ")}
+      >
+        <span
+          className={[
+            "h-1.5 w-1.5 rounded-full",
+            tone === "active" ? "bg-emerald-400" : "bg-amber-400",
+          ].join(" ")}
+        />
+        {label}
+      </h3>
+      {boards.length === 0 ? (
+        <p className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-zinc-400">
+          게시판이 없습니다.
+        </p>
+      ) : null}
       {boards.map((board) => {
         const panel = postPanels[board.id];
         const posts = panel?.posts ?? [];
