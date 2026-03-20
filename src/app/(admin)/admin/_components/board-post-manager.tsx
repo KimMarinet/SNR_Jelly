@@ -13,6 +13,12 @@ type PostPanelState = {
   error: string | null;
 };
 
+// ── 커스텀 확인 모달 타입 ──────────────────────────────────────
+type ConfirmModal =
+  | { type: "deactivate"; boardId: number; boardTitle: string }
+  | { type: "hard-delete"; board: AdminBoard; inputValue: string }
+  | null;
+
 type BoardPostManagerProps = {
   initialActiveBoards: AdminBoard[];
   initialInactiveBoards: AdminBoard[];
@@ -37,6 +43,7 @@ export function BoardPostManager({
   const [mutatingBoardId, setMutatingBoardId] = useState<number | null>(null);
   const [postPanels, setPostPanels] = useState<Record<number, PostPanelState>>({});
   const [boardTab, setBoardTab] = useState<"active" | "inactive">("active");
+  const [confirmModal, setConfirmModal] = useState<ConfirmModal>(null);
 
   const sortedActiveBoards = useMemo(
     () => [...activeBoards].sort((a, b) => a.order - b.order || a.id - b.id),
@@ -133,18 +140,14 @@ export function BoardPostManager({
     }
   }
 
-  async function deactivateBoard(boardId: number) {
+  function deactivateBoard(boardId: number) {
     const targetBoard = activeBoards.find((board) => board.id === boardId);
     const boardTitle = targetBoard?.title ?? "선택한 게시판";
+    setConfirmModal({ type: "deactivate", boardId, boardTitle });
+  }
 
-    const shouldDeactivate = window.confirm(
-      `"${boardTitle}" 게시판을 비활성화하시겠습니까?\n비활성 게시판 영역에서 다시 복구할 수 있습니다.`,
-    );
-
-    if (!shouldDeactivate) {
-      return;
-    }
-
+  async function executeDeactivate(boardId: number) {
+    setConfirmModal(null);
     setMutatingBoardId(boardId);
     onStatus("");
     try {
@@ -184,17 +187,12 @@ export function BoardPostManager({
     }
   }
 
-  async function hardDeleteBoard(board: AdminBoard) {
-    if (!window.confirm(`"${board.title}" 게시판을 영구 삭제하시겠습니까?`)) {
-      return;
-    }
-    const confirmBoardTitle = window.prompt(
-      `최종 삭제를 위해 게시판 이름을 정확히 입력해 주세요: ${board.title}`,
-    );
-    if (confirmBoardTitle === null) {
-      return;
-    }
+  function hardDeleteBoard(board: AdminBoard) {
+    setConfirmModal({ type: "hard-delete", board, inputValue: "" });
+  }
 
+  async function executeHardDelete(board: AdminBoard, confirmBoardTitle: string) {
+    setConfirmModal(null);
     setMutatingBoardId(board.id);
     onStatus("");
 
@@ -271,6 +269,20 @@ export function BoardPostManager({
 
   return (
     <div className="space-y-6">
+      {/* ── 커스텀 확인 모달 ── */}
+      {confirmModal !== null && (
+        <ConfirmDialog
+          modal={confirmModal}
+          onUpdateInput={(value) =>
+            confirmModal.type === "hard-delete"
+              ? setConfirmModal({ ...confirmModal, inputValue: value })
+              : undefined
+          }
+          onCancel={() => setConfirmModal(null)}
+          onConfirmDeactivate={executeDeactivate}
+          onConfirmHardDelete={executeHardDelete}
+        />
+      )}
       {/* ── 섹션 A : 게시판 생성 ── */}
       <section className="rounded-2xl border border-emerald-400/20 bg-emerald-400/5">
         {/* 섹션 헤더 */}
@@ -757,6 +769,155 @@ function BoardColumn({
           </article>
         );
       })}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════
+//  커스텀 확인 다이얼로그
+// ════════════════════════════════════════════════════════
+type ConfirmDialogProps = {
+  modal: NonNullable<ConfirmModal>;
+  onUpdateInput: (value: string) => void;
+  onCancel: () => void;
+  onConfirmDeactivate: (boardId: number) => void;
+  onConfirmHardDelete: (board: AdminBoard, inputValue: string) => void;
+};
+
+function ConfirmDialog({
+  modal,
+  onUpdateInput,
+  onCancel,
+  onConfirmDeactivate,
+  onConfirmHardDelete,
+}: ConfirmDialogProps) {
+  const isHardDelete = modal.type === "hard-delete";
+  const inputValue = isHardDelete ? modal.inputValue : "";
+  const targetTitle = isHardDelete ? modal.board.title : modal.boardTitle;
+  const isDeleteDisabled = isHardDelete && inputValue !== modal.board.title;
+
+  return (
+    /* 오버레이 */
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onCancel}
+    >
+      {/* 다이얼로그 카드 */}
+      <div
+        className="relative mx-4 w-full max-w-md overflow-hidden rounded-2xl border bg-[#0d1117] shadow-2xl"
+        style={{
+          borderColor: isHardDelete
+            ? "rgba(248,113,113,0.3)"
+            : "rgba(251,191,36,0.3)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* 상단 강조 바 */}
+        <div
+          className="h-1 w-full"
+          style={{
+            background: isHardDelete
+              ? "linear-gradient(90deg,#ef4444,#f87171)"
+              : "linear-gradient(90deg,#f59e0b,#fcd34d)",
+          }}
+        />
+
+        <div className="px-6 py-5">
+          {/* 아이콘 + 제목 */}
+          <div className="flex items-start gap-4">
+            <span
+              className={[
+                "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg",
+                isHardDelete
+                  ? "bg-rose-400/15 text-rose-300"
+                  : "bg-amber-400/15 text-amber-300",
+              ].join(" ")}
+            >
+              {isHardDelete ? "🗑️" : "⚠️"}
+            </span>
+
+            <div>
+              <p
+                className={[
+                  "text-sm font-bold",
+                  isHardDelete ? "text-rose-300" : "text-amber-300",
+                ].join(" ")}
+              >
+                {isHardDelete ? "게시판 영구 삭제" : "게시판 비활성화"}
+              </p>
+              <p className="mt-1 text-[13px] leading-relaxed text-slate-300">
+                {isHardDelete ? (
+                  <>
+                    <span className="font-semibold text-white">{targetTitle}</span>{" "}
+                    게시판과 모든 게시글이 영구 삭제됩니다.
+                    <br />
+                    <span className="text-rose-300">이 작업은 되돌릴 수 없습니다.</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-semibold text-white">{targetTitle}</span>{" "}
+                    게시판을 비활성화합니다.
+                    <br />
+                    비활성 탭에서 언제든 복구할 수 있습니다.
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* 영구 삭제 전용: 이름 재입력 확인 */}
+          {isHardDelete && (
+            <div className="mt-4">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-semibold text-slate-400">
+                  확인을 위해 게시판 이름을 정확히 입력해 주세요
+                </span>
+                <span className="rounded bg-white/5 px-2 py-1 font-mono text-xs text-rose-200">
+                  {targetTitle}
+                </span>
+                <input
+                  autoFocus
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => onUpdateInput(e.target.value)}
+                  placeholder={targetTitle}
+                  className="rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-rose-400/60 placeholder:text-slate-600"
+                />
+              </label>
+            </div>
+          )}
+
+          {/* 버튼 */}
+          <div className="mt-5 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="rounded-full border border-white/20 px-5 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/8"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              disabled={isDeleteDisabled}
+              onClick={() => {
+                if (modal.type === "deactivate") {
+                  onConfirmDeactivate(modal.boardId);
+                } else {
+                  onConfirmHardDelete(modal.board, modal.inputValue);
+                }
+              }}
+              className={[
+                "rounded-full px-5 py-2 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-40",
+                isHardDelete
+                  ? "bg-rose-500 text-white hover:bg-rose-400"
+                  : "bg-amber-400 text-zinc-950 hover:bg-amber-300",
+              ].join(" ")}
+            >
+              {isHardDelete ? "영구 삭제" : "비활성화"}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
