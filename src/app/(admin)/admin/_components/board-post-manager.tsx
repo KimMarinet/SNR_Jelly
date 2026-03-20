@@ -519,51 +519,216 @@ function BoardColumn({
         const scope = panel?.scope ?? "active";
 
         return (
-          <article key={board.id} className="rounded-xl border border-white/15 bg-black/35 p-4">
-            <div className="grid gap-2">
-              <input value={board.title} onChange={(e) => onEdit(board.id, "title", e.target.value)} className="rounded-lg border border-white/20 bg-black/35 px-3 py-1.5 text-sm text-white outline-none" />
-              <input value={board.slug} onChange={(e) => onEdit(board.id, "slug", e.target.value.trim().toLowerCase())} className="rounded-lg border border-white/20 bg-black/35 px-3 py-1.5 text-sm text-white outline-none" />
-              <input value={board.description ?? ""} onChange={(e) => onEdit(board.id, "description", e.target.value)} className="rounded-lg border border-white/20 bg-black/35 px-3 py-1.5 text-sm text-white outline-none" />
-              <input type="number" value={board.order} onChange={(e) => onEdit(board.id, "order", Number(e.target.value))} className="w-24 rounded-lg border border-white/20 bg-black/35 px-3 py-1.5 text-sm text-white outline-none" />
+          <article key={board.id} className="overflow-hidden rounded-xl border border-white/15 bg-black/35">
+            {/* ── 카드 헤더: 게시판 식별 정보 ── */}
+            <div className="flex items-center justify-between border-b border-white/10 bg-black/30 px-4 py-2.5">
+              <div className="flex items-center gap-2">
+                <span className="rounded bg-white/8 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">
+                  #{board.id}
+                </span>
+                <p className="text-sm font-semibold text-white">{board.title}</p>
+                <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] text-slate-400">
+                  /{board.slug}
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-500">
+                게시글 {board._count?.posts ?? 0}개
+              </span>
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-300">
-              <span>게시글: {board._count?.posts ?? 0}</span>
-              <button type="button" disabled={savingBoardId === board.id} onClick={() => onSave(board)} className="rounded-full border border-emerald-300/50 px-3 py-1 font-semibold text-emerald-100 disabled:opacity-70">{savingBoardId === board.id ? "저장 중..." : "저장"}</button>
+            {/* ── 필드 편집 그리드 ── */}
+            <div className="grid gap-x-4 gap-y-3 p-4 sm:grid-cols-2">
+              {/* 이름 */}
+              <label className="flex flex-col gap-1">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  이름
+                </span>
+                <input
+                  value={board.title}
+                  onChange={(e) => onEdit(board.id, "title", e.target.value)}
+                  className="rounded-lg border border-white/20 bg-black/35 px-3 py-1.5 text-sm text-white outline-none focus:border-white/40"
+                />
+              </label>
+
+              {/* 슬러그 */}
+              <label className="flex flex-col gap-1">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  슬러그 (URL 경로)
+                </span>
+                <input
+                  value={board.slug}
+                  onChange={(e) => onEdit(board.id, "slug", e.target.value.trim().toLowerCase())}
+                  className="rounded-lg border border-white/20 bg-black/35 px-3 py-1.5 font-mono text-sm text-white outline-none focus:border-white/40"
+                />
+              </label>
+
+              {/* 설명 */}
+              <label className="flex flex-col gap-1 sm:col-span-2">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  설명
+                </span>
+                <input
+                  value={board.description ?? ""}
+                  onChange={(e) => onEdit(board.id, "description", e.target.value)}
+                  placeholder="(없음)"
+                  className="rounded-lg border border-white/20 bg-black/35 px-3 py-1.5 text-sm text-white outline-none focus:border-white/40 placeholder:text-slate-600"
+                />
+              </label>
+
+              {/* 표시 순서 */}
+              <label className="flex flex-col gap-1">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  표시 순서
+                </span>
+                <input
+                  type="number"
+                  value={board.order}
+                  onChange={(e) => onEdit(board.id, "order", Number(e.target.value))}
+                  className="w-28 rounded-lg border border-white/20 bg-black/35 px-3 py-1.5 text-sm text-white outline-none focus:border-white/40"
+                />
+              </label>
+            </div>
+
+            {/* ── 액션 버튼 ── */}
+            <div className="flex flex-wrap items-center gap-2 border-t border-white/10 bg-black/20 px-4 py-3">
+              <button
+                type="button"
+                disabled={savingBoardId === board.id}
+                onClick={() => onSave(board)}
+                className="rounded-full border border-emerald-300/50 px-3 py-1 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-400/10 disabled:opacity-60"
+              >
+                {savingBoardId === board.id ? "저장 중..." : "저장"}
+              </button>
+
               {tone === "active" ? (
-                <button type="button" disabled={mutatingBoardId === board.id} onClick={() => onDeactivate?.(board.id)} className="rounded-full border border-amber-300/50 px-3 py-1 font-semibold text-amber-100 disabled:opacity-70">{mutatingBoardId === board.id ? "처리 중..." : "비활성화"}</button>
+                <button
+                  type="button"
+                  disabled={mutatingBoardId === board.id}
+                  onClick={() => onDeactivate?.(board.id)}
+                  className="rounded-full border border-amber-300/50 px-3 py-1 text-xs font-semibold text-amber-100 transition hover:bg-amber-400/10 disabled:opacity-60"
+                >
+                  {mutatingBoardId === board.id ? "처리 중..." : "비활성화"}
+                </button>
               ) : (
                 <>
-                  <button type="button" disabled={mutatingBoardId === board.id} onClick={() => onRestore?.(board.id)} className="rounded-full border border-emerald-300/50 px-3 py-1 font-semibold text-emerald-100 disabled:opacity-70">{mutatingBoardId === board.id ? "처리 중..." : "복구"}</button>
-                  <button type="button" disabled={mutatingBoardId === board.id} onClick={() => onHardDelete?.(board)} className="rounded-full border border-rose-300/50 px-3 py-1 font-semibold text-rose-100 disabled:opacity-70">{mutatingBoardId === board.id ? "처리 중..." : "최종 삭제"}</button>
+                  <button
+                    type="button"
+                    disabled={mutatingBoardId === board.id}
+                    onClick={() => onRestore?.(board.id)}
+                    className="rounded-full border border-emerald-300/50 px-3 py-1 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-400/10 disabled:opacity-60"
+                  >
+                    {mutatingBoardId === board.id ? "처리 중..." : "복구"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={mutatingBoardId === board.id}
+                    onClick={() => onHardDelete?.(board)}
+                    className="rounded-full border border-rose-300/50 px-3 py-1 text-xs font-semibold text-rose-100 transition hover:bg-rose-400/10 disabled:opacity-60"
+                  >
+                    {mutatingBoardId === board.id ? "처리 중..." : "최종 삭제"}
+                  </button>
                 </>
               )}
             </div>
 
-            <details className="mt-4 rounded-lg border border-white/10 bg-black/25 p-3">
-              <summary className="cursor-pointer text-sm font-semibold text-white">게시글 관리</summary>
-              <div className="mt-3 space-y-2">
+            {/* ── 게시글 관리 ── */}
+            <details className="border-t border-white/10">
+              <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-xs font-semibold text-slate-400 transition hover:text-slate-200">
+                <span>게시글 관리</span>
+                <span className="select-none text-slate-600">▾</span>
+              </summary>
+
+              <div className="space-y-2 border-t border-white/8 px-4 py-3">
+                {/* 게시글 범위 탭 */}
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => onLoadPosts(board.id, "active")} className={`rounded-full px-3 py-1 text-xs font-semibold ${scope === "active" ? "bg-emerald-300 text-zinc-950" : "border border-white/25 text-zinc-100"}`}>활성</button>
-                  <button type="button" onClick={() => onLoadPosts(board.id, "trash")} className={`rounded-full px-3 py-1 text-xs font-semibold ${scope === "trash" ? "bg-amber-300 text-zinc-950" : "border border-white/25 text-zinc-100"}`}>휴지통</button>
+                  <button
+                    type="button"
+                    onClick={() => onLoadPosts(board.id, "active")}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                      scope === "active"
+                        ? "bg-emerald-300 text-zinc-950"
+                        : "border border-white/25 text-zinc-400 hover:text-zinc-100"
+                    }`}
+                  >
+                    활성
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onLoadPosts(board.id, "trash")}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                      scope === "trash"
+                        ? "bg-amber-300 text-zinc-950"
+                        : "border border-white/25 text-zinc-400 hover:text-zinc-100"
+                    }`}
+                  >
+                    휴지통
+                  </button>
                 </div>
-                {panel?.loading ? <p className="text-xs text-zinc-300">불러오는 중...</p> : null}
-                {panel?.error ? <p className="text-xs text-rose-200">{panel.error}</p> : null}
-                {!panel?.loading && posts.length === 0 ? <p className="text-xs text-zinc-300">게시글이 없습니다.</p> : null}
+
+                {panel?.loading && (
+                  <p className="text-xs text-slate-500">불러오는 중...</p>
+                )}
+                {panel?.error && (
+                  <p className="text-xs text-rose-300">{panel.error}</p>
+                )}
+                {!panel?.loading && posts.length === 0 && (
+                  <p className="text-xs text-slate-600">게시글이 없습니다.</p>
+                )}
+
+                {/* 게시글 목록 */}
                 {posts.map((post) => (
-                  <div key={post.id} className="rounded-lg border border-white/10 bg-black/30 p-2">
-                    <p className="text-sm font-semibold text-white">{post.title}</p>
-                    <p className="text-xs text-zinc-300">{post.author.email}</p>
-                    <div className="mt-1 flex flex-wrap gap-1">
+                  <div key={post.id} className="rounded-lg border border-white/10 bg-black/30 px-3 py-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-white">{post.title}</p>
+                        <p className="mt-0.5 text-[11px] text-slate-500">{post.author.email}</p>
+                      </div>
+                      {!post.deletedAt && (
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                            post.isPublished
+                              ? "bg-emerald-400/15 text-emerald-300"
+                              : "bg-white/8 text-slate-500"
+                          }`}
+                        >
+                          {post.isPublished ? "공개" : "비공개"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1">
                       {!post.deletedAt ? (
                         <>
-                          <button type="button" onClick={() => onTogglePostPublish(board.id, post)} className="rounded-full border border-cyan-300/50 px-2 py-1 text-[11px] font-semibold text-cyan-100">{post.isPublished ? "비공개 전환" : "공개 전환"}</button>
-                          <button type="button" onClick={() => onTrashPost(board.id, post)} className="rounded-full border border-amber-300/50 px-2 py-1 text-[11px] font-semibold text-amber-100">휴지통 이동</button>
+                          <button
+                            type="button"
+                            onClick={() => onTogglePostPublish(board.id, post)}
+                            className="rounded-full border border-cyan-300/50 px-2 py-0.5 text-[11px] font-semibold text-cyan-100 transition hover:bg-cyan-400/10"
+                          >
+                            {post.isPublished ? "비공개 전환" : "공개 전환"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onTrashPost(board.id, post)}
+                            className="rounded-full border border-amber-300/50 px-2 py-0.5 text-[11px] font-semibold text-amber-100 transition hover:bg-amber-400/10"
+                          >
+                            휴지통 이동
+                          </button>
                         </>
                       ) : (
                         <>
-                          <button type="button" onClick={() => onRestorePost(board.id, post)} className="rounded-full border border-emerald-300/50 px-2 py-1 text-[11px] font-semibold text-emerald-100">복구</button>
-                          <button type="button" onClick={() => onDeletePost(board.id, post)} className="rounded-full border border-rose-300/50 px-2 py-1 text-[11px] font-semibold text-rose-100">영구 삭제</button>
+                          <button
+                            type="button"
+                            onClick={() => onRestorePost(board.id, post)}
+                            className="rounded-full border border-emerald-300/50 px-2 py-0.5 text-[11px] font-semibold text-emerald-100 transition hover:bg-emerald-400/10"
+                          >
+                            복구
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onDeletePost(board.id, post)}
+                            className="rounded-full border border-rose-300/50 px-2 py-0.5 text-[11px] font-semibold text-rose-100 transition hover:bg-rose-400/10"
+                          >
+                            영구 삭제
+                          </button>
                         </>
                       )}
                     </div>
