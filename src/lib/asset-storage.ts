@@ -13,6 +13,7 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/svg+xml",
 ]);
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_ORIGINAL_NAME_LENGTH = 191;
 
 export const ASSET_UPLOAD_CONSTRAINTS = {
   allowedMimeTypes: [...ALLOWED_MIME_TYPES],
@@ -21,6 +22,14 @@ export const ASSET_UPLOAD_CONSTRAINTS = {
 
 export function sanitizeFileName(input: string): string {
   return input.replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+
+export function normalizeOriginalFileName(input: string): string {
+  const trimmed = input.trim() || "asset";
+  if (trimmed.length <= MAX_ORIGINAL_NAME_LENGTH) {
+    return trimmed;
+  }
+  return trimmed.slice(0, MAX_ORIGINAL_NAME_LENGTH);
 }
 
 export function getPublicAssetUrl(storedName: string): string {
@@ -60,14 +69,15 @@ export async function writeAssetFile(file: File): Promise<{
   await mkdir(PUBLIC_UPLOAD_DIR, { recursive: true });
 
   const originalName = sanitizeFileName(file.name || "asset");
-  const extensionFromName = path.extname(originalName);
+  const extensionFromName = path.extname(originalName).toLowerCase();
   const extension = extensionFromName || getExtensionByMimeType(file.type) || ".bin";
-  const nameWithoutExtension = path.basename(originalName, extension);
-  const uniqueToken = crypto.randomBytes(8).toString("hex");
-  const storedName = `${nameWithoutExtension}-${Date.now()}-${uniqueToken}${extension}`;
-  const diskPath = getAssetDiskPath(storedName);
 
   const buffer = Buffer.from(await file.arrayBuffer());
+  const contentHash = crypto.createHash("sha256").update(buffer).digest("hex").slice(0, 40);
+  const randomHash = crypto.randomBytes(8).toString("hex");
+  const storedName = `${contentHash}${randomHash}${extension}`;
+  const diskPath = getAssetDiskPath(storedName);
+
   await writeFile(diskPath, buffer);
 
   return {

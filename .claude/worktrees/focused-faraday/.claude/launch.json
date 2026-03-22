@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "snr-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "C:/Users/kiana/Desktop/DK/SNR_homepage", "run", "dev"],
+      "port": 3000,
+      "autoPort": false
+    }
+  ]
+}

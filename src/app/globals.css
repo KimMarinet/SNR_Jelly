@@ -1,11 +1,36 @@
 @import "tailwindcss";
 
-:root {
+:root,
+:root[data-theme="dark"] {
   --background: #080b16;
   --foreground: #ecf0ff;
   --accent: #f3b73f;
   --accent-strong: #f59e0b;
   --surface: #12172b;
+  --surface-elevated: rgba(11, 16, 33, 0.78);
+  --surface-soft: rgba(255, 255, 255, 0.06);
+  --border-soft: rgba(255, 255, 255, 0.16);
+  --text-muted: #c6cee9;
+  --strong-text: #ffffff;
+  --chip-bg: rgba(255, 255, 255, 0.08);
+  --chip-border: rgba(255, 255, 255, 0.26);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --background: #f4f7ff;
+  --foreground: #0f172a;
+  --accent: #d97706;
+  --accent-strong: #b45309;
+  --surface: #ffffff;
+  --surface-elevated: rgba(255, 255, 255, 0.9);
+  --surface-soft: rgba(15, 23, 42, 0.04);
+  --border-soft: rgba(15, 23, 42, 0.16);
+  --text-muted: #334155;
+  --strong-text: #0f172a;
+  --chip-bg: rgba(15, 23, 42, 0.06);
+  --chip-border: rgba(15, 23, 42, 0.24);
+  color-scheme: light;
 }
 
 @theme inline {
@@ -15,15 +40,47 @@
 }
 
 body {
-  background: #080b16;
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-noto-sans-kr), sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .layout-shell {
   display: flex;
   min-height: 100vh;
   flex-direction: column;
+}
+
+.theme-elevated {
+  background: var(--surface-elevated);
+}
+
+.theme-panel {
+  background: var(--surface);
+  border-color: var(--border-soft);
+}
+
+.theme-soft {
+  background: var(--surface-soft);
+}
+
+.theme-border {
+  border-color: var(--border-soft);
+}
+
+.theme-text-strong {
+  color: var(--strong-text);
+}
+
+.theme-text-muted {
+  color: var(--text-muted);
+}
+
+.theme-chip {
+  background: var(--chip-bg);
+  border-color: var(--chip-border);
+  color: var(--strong-text);
 }
 
 .brand-heading {
@@ -174,5 +231,39 @@ main {
   50% {
     opacity: 0.7;
     transform: scaleY(1) translateY(4px);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ── 검기 트랜지션 분할 패널 ── */
+@keyframes slash-split-tl {
+  from {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+  to {
+    transform: translate(-22vw, -22vh);
+    opacity: 0;
+  }
+}
+
+@keyframes slash-split-br {
+  from {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+  to {
+    transform: translate(22vw, 22vh);
+    opacity: 0;
   }
 }

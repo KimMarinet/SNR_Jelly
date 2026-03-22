@@ -1,7 +1,7 @@
 "use client";
 
-import type { AssetCategory } from "@prisma/client";
-import { FormEvent, useMemo, useState } from "react";
+import type { AssetCategory } from "@/generated/prisma";
+import { FormEvent, useMemo, useRef, useState } from "react";
 import { readJson } from "./http";
 import type { AdminAsset } from "./types";
 
@@ -32,6 +32,7 @@ export function AssetManager({
   const [uploading, setUploading] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadCategory, setUploadCategory] = useState<AssetCategory>("COMMON");
+  const uploadInputRef = useRef<HTMLInputElement>(null);
 
   const visibleAssets = useMemo(() => {
     const source = assetScope === "active" ? activeAssets : trashedAssets;
@@ -86,6 +87,9 @@ export function AssetManager({
 
       setActiveAssets((prev) => [data.asset, ...prev]);
       setUploadFile(null);
+      if (uploadInputRef.current) {
+        uploadInputRef.current.value = "";
+      }
       onStatus(`업로드 완료: ${data.asset.originalName}`);
     } catch (caught) {
       onStatus(caught instanceof Error ? caught.message : "파일 업로드에 실패했습니다.");
@@ -165,6 +169,7 @@ export function AssetManager({
           ))}
         </select>
         <input
+          ref={uploadInputRef}
           type="file"
           accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
           onChange={(event) => setUploadFile(event.currentTarget.files?.[0] ?? null)}

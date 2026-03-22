@@ -32,9 +32,11 @@ export async function GET(
       id: true,
       title: true,
       content: true,
+      likeCount: true,
+      viewCount: true,
       createdAt: true,
       author: {
-        select: { email: true },
+        select: { email: true, nickname: true },
       },
     },
   });

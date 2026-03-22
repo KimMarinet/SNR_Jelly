@@ -1,17 +1,17 @@
-import { AssetCategory } from "@prisma/client";
+import { AssetCategory } from "@/generated/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import { hasAdminSessionFromRequest } from "@/lib/admin-auth";
 import {
   ASSET_UPLOAD_CONSTRAINTS,
+  normalizeOriginalFileName,
   removeAssetFile,
-  sanitizeFileName,
   validateAssetFile,
   writeAssetFile,
 } from "@/lib/asset-storage";
 import { prisma } from "@/lib/prisma";
+import { getAdminSession } from "@/lib/route-auth";
 
 function unauthorizedResponse() {
-  return NextResponse.json({ message: "관리자 권한이 필요합니다." }, { status: 401 });
+  return NextResponse.json({ message: "Admin authorization required." }, { status: 401 });
 }
 
 function parseScope(scope: string | null): "active" | "trash" | "all" {
@@ -32,7 +32,8 @@ function parseCategory(value: string | null): AssetCategory | undefined {
 }
 
 export async function GET(request: NextRequest) {
-  if (!hasAdminSessionFromRequest(request)) {
+  const admin = await getAdminSession();
+  if (!admin) {
     return unauthorizedResponse();
   }
 
@@ -79,7 +80,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!hasAdminSessionFromRequest(request)) {
+  const admin = await getAdminSession();
+  if (!admin) {
     return unauthorizedResponse();
   }
 
@@ -89,7 +91,7 @@ export async function POST(request: NextRequest) {
   const category = parseCategory(String(categoryValue ?? "")) ?? "COMMON";
 
   if (!(fileValue instanceof File)) {
-    return NextResponse.json({ message: "업로드할 파일이 필요합니다." }, { status: 400 });
+    return NextResponse.json({ message: "File is required." }, { status: 400 });
   }
 
   const validationError = validateAssetFile(fileValue);
@@ -97,14 +99,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: validationError }, { status: 400 });
   }
 
-  const safeOriginalName = sanitizeFileName(fileValue.name || "asset");
+  const originalName = normalizeOriginalFileName(fileValue.name || "asset");
   const uploaded = await writeAssetFile(fileValue);
 
   try {
     const asset = await prisma.asset.create({
       data: {
         category,
-        originalName: safeOriginalName,
+        originalName,
         storedName: uploaded.storedName,
         mimeType: fileValue.type,
         size: fileValue.size,
@@ -128,7 +130,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     await removeAssetFile(uploaded.storedName);
     return NextResponse.json(
-      { message: "파일 메타데이터 저장에 실패했습니다.", detail: String(error) },
+      { message: "Failed to save asset metadata.", detail: String(error) },
       { status: 500 },
     );
   }

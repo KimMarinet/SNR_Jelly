@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hasAdminSessionFromRequest } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { getAdminSession } from "@/lib/route-auth";
 
 function unauthorizedResponse() {
-  return NextResponse.json({ message: "관리자 권한이 필요합니다." }, { status: 401 });
+  return NextResponse.json({ message: "Admin authorization required." }, { status: 401 });
 }
 
 function parseScope(scope: string | null): "active" | "trash" | "all" {
@@ -14,7 +14,8 @@ function parseScope(scope: string | null): "active" | "trash" | "all" {
 }
 
 export async function GET(request: NextRequest) {
-  if (!hasAdminSessionFromRequest(request)) {
+  const admin = await getAdminSession();
+  if (!admin) {
     return unauthorizedResponse();
   }
 
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   const boardId = Number(boardIdRaw);
 
   if (!Number.isInteger(boardId) || boardId <= 0) {
-    return NextResponse.json({ message: "유효하지 않은 boardId입니다." }, { status: 400 });
+    return NextResponse.json({ message: "Invalid boardId." }, { status: 400 });
   }
 
   const posts = await prisma.post.findMany({
@@ -40,7 +41,9 @@ export async function GET(request: NextRequest) {
       id: true,
       boardId: true,
       title: true,
+      content: true,
       isPublished: true,
+      isPinned: true,
       createdAt: true,
       updatedAt: true,
       deletedAt: true,
