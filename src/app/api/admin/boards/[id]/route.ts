@@ -1,7 +1,8 @@
-import { Prisma } from "@prisma/client";
+﻿import { revalidatePath, revalidateTag } from "next/cache";
+import { Prisma } from "@/generated/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import { hasAdminSessionFromRequest } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { getAdminSession } from "@/lib/route-auth";
 
 type UpdateBoardBody = {
   action?: "deactivate" | "restore";
@@ -9,6 +10,7 @@ type UpdateBoardBody = {
   slug?: string;
   description?: string | null;
   order?: number;
+  isAdminWriteOnly?: boolean;
 };
 
 type HardDeleteBoardBody = {
@@ -16,7 +18,7 @@ type HardDeleteBoardBody = {
 };
 
 function unauthorizedResponse() {
-  return NextResponse.json({ message: "관리자 권한이 필요합니다." }, { status: 401 });
+  return NextResponse.json({ message: "Admin authorization required." }, { status: 401 });
 }
 
 function parseId(rawId: string): number | null {
@@ -36,23 +38,24 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!hasAdminSessionFromRequest(request)) {
+  const admin = await getAdminSession();
+  if (!admin) {
     return unauthorizedResponse();
   }
 
   const { id: rawId } = await params;
   const id = parseId(rawId);
   if (!id) {
-    return NextResponse.json({ message: "유효하지 않은 게시판 ID입니다." }, { status: 400 });
+    return NextResponse.json({ message: "Invalid board ID." }, { status: 400 });
   }
 
   const board = await prisma.board.findUnique({
     where: { id },
-    select: { id: true },
+    select: { id: true, slug: true },
   });
 
   if (!board) {
-    return NextResponse.json({ message: "게시판을 찾을 수 없습니다." }, { status: 404 });
+    return NextResponse.json({ message: "Board not found." }, { status: 404 });
   }
 
   const body = (await request.json()) as UpdateBoardBody;
@@ -68,13 +71,18 @@ export async function PATCH(
         description: true,
         order: true,
         isActive: true,
+        isAdminWriteOnly: true,
         _count: { select: { posts: true } },
       },
     });
 
+    revalidateTag("board-navigation", "max");
+    revalidatePath("/lounge");
+    revalidatePath(`/board/${updatedBoard.slug}`);
+
     return NextResponse.json({
       board: updatedBoard,
-      message: body.action === "restore" ? "게시판을 복구했습니다." : "게시판을 비활성화했습니다.",
+      message: body.action === "restore" ? "Board restored." : "Board deactivated.",
     });
   }
 
@@ -83,12 +91,13 @@ export async function PATCH(
     slug?: string;
     description?: string | null;
     order?: number;
+    isAdminWriteOnly?: boolean;
   } = {};
 
   if (typeof body.title === "string") {
     const title = body.title.trim();
     if (!title) {
-      return NextResponse.json({ message: "게시판 이름은 필수입니다." }, { status: 400 });
+      return NextResponse.json({ message: "Board title is required." }, { status: 400 });
     }
     data.title = title;
   }
@@ -96,10 +105,7 @@ export async function PATCH(
   if (typeof body.slug === "string") {
     const slug = normalizeSlug(body.slug);
     if (!slug || !isValidSlug(slug)) {
-      return NextResponse.json(
-        { message: "슬러그 형식이 올바르지 않습니다." },
-        { status: 400 },
-      );
+      return NextResponse.json({ message: "Invalid slug format." }, { status: 400 });
     }
     data.slug = slug;
   }
@@ -113,6 +119,10 @@ export async function PATCH(
     data.order = Number.isFinite(body.order) ? Number(body.order) : 0;
   }
 
+  if (body.isAdminWriteOnly !== undefined) {
+    data.isAdminWriteOnly = Boolean(body.isAdminWriteOnly);
+  }
+
   try {
     const updatedBoard = await prisma.board.update({
       where: { id },
@@ -124,22 +134,30 @@ export async function PATCH(
         description: true,
         order: true,
         isActive: true,
+        isAdminWriteOnly: true,
         _count: { select: { posts: true } },
       },
     });
 
-    return NextResponse.json({ board: updatedBoard, message: "게시판이 저장되었습니다." });
+    revalidateTag("board-navigation", "max");
+    revalidatePath("/lounge");
+    revalidatePath(`/board/${board.slug}`);
+    if (updatedBoard.slug !== board.slug) {
+      revalidatePath(`/board/${updatedBoard.slug}`);
+    }
+
+    return NextResponse.json({ board: updatedBoard, message: "Board updated." });
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
       return NextResponse.json(
-        { message: "동일한 슬러그의 게시판이 이미 존재합니다." },
+        { message: "A board with this slug already exists." },
         { status: 409 },
       );
     }
-    return NextResponse.json({ message: "게시판 수정에 실패했습니다." }, { status: 500 });
+    return NextResponse.json({ message: "Failed to update board." }, { status: 500 });
   }
 }
 
@@ -147,14 +165,15 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!hasAdminSessionFromRequest(request)) {
+  const admin = await getAdminSession();
+  if (!admin) {
     return unauthorizedResponse();
   }
 
   const { id: rawId } = await params;
   const id = parseId(rawId);
   if (!id) {
-    return NextResponse.json({ message: "유효하지 않은 게시판 ID입니다." }, { status: 400 });
+    return NextResponse.json({ message: "Invalid board ID." }, { status: 400 });
   }
 
   const body = (await request.json()) as HardDeleteBoardBody;
@@ -162,27 +181,30 @@ export async function DELETE(
 
   const board = await prisma.board.findUnique({
     where: { id },
-    select: { id: true, title: true, isActive: true },
+    select: { id: true, title: true, slug: true, isActive: true },
   });
 
   if (!board) {
-    return NextResponse.json({ message: "게시판을 찾을 수 없습니다." }, { status: 404 });
+    return NextResponse.json({ message: "Board not found." }, { status: 404 });
   }
 
   if (board.isActive) {
     return NextResponse.json(
-      { message: "활성 게시판은 바로 삭제할 수 없습니다. 먼저 비활성화해 주세요." },
+      { message: "Active boards cannot be deleted directly. Deactivate first." },
       { status: 400 },
     );
   }
 
   if (confirmBoardTitle !== board.title) {
     return NextResponse.json(
-      { message: "확인용 게시판 이름이 일치하지 않습니다." },
+      { message: "Board title confirmation does not match." },
       { status: 400 },
     );
   }
 
   await prisma.board.delete({ where: { id } });
-  return NextResponse.json({ message: "게시판이 최종 삭제되었습니다." });
+  revalidateTag("board-navigation", "max");
+  revalidatePath("/lounge");
+  revalidatePath(`/board/${board.slug}`);
+  return NextResponse.json({ message: "Board deleted permanently." });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { readJson } from "./http";
 import type { AdminBoard, AdminPost } from "./types";
 
@@ -13,7 +13,15 @@ type PostPanelState = {
   error: string | null;
 };
 
-// ── 커스텀 확인 모달 타입 ──────────────────────────────────────
+type BulkPostAction =
+  | "publish"
+  | "unpublish"
+  | "pin"
+  | "unpin"
+  | "trash"
+  | "restore"
+  | "delete";
+
 type ConfirmModal =
   | { type: "deactivate"; boardId: number; boardTitle: string }
   | { type: "hard-delete"; board: AdminBoard; inputValue: string }
@@ -24,6 +32,79 @@ type BoardPostManagerProps = {
   initialInactiveBoards: AdminBoard[];
   onStatus: (message: string) => void;
 };
+
+type BoardTab = "active" | "inactive";
+
+type SelectedBoardByTab = {
+  active: number | null;
+  inactive: number | null;
+};
+
+type PostManagerModalProps = {
+  board: AdminBoard;
+  panel: PostPanelState | undefined;
+  bulkMutatingKey: string | null;
+  onClose: () => void;
+  onRefreshPosts: (boardId: number, scope: PostScope) => void;
+  onBulkAction: (
+    boardId: number,
+    scope: PostScope,
+    postIds: number[],
+    action: BulkPostAction,
+  ) => Promise<void>;
+  onTogglePublish: (boardId: number, post: AdminPost) => void;
+  onTogglePin: (boardId: number, post: AdminPost) => void;
+  onTrashPost: (boardId: number, post: AdminPost) => void;
+  onRestorePost: (boardId: number, post: AdminPost) => void;
+  onDeletePost: (boardId: number, post: AdminPost) => void;
+};
+
+function upsertBoard(list: AdminBoard[], board: AdminBoard): AdminBoard[] {
+  const replaced = list.map((item) => (item.id === board.id ? board : item));
+  return replaced.some((item) => item.id === board.id) ? replaced : [board, ...list];
+}
+
+function extractFirstImageUrl(content: string): string | null {
+  const htmlImgMatch = content.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (htmlImgMatch?.[1]) {
+    return htmlImgMatch[1];
+  }
+
+  const markdownImgMatch = content.match(/!\[[^\]]*]\(([^)]+)\)/);
+  if (markdownImgMatch?.[1]) {
+    return markdownImgMatch[1];
+  }
+
+  return null;
+}
+
+function toPreviewText(content: string, max = 100): string {
+  const withoutTags = content
+    .replace(/<[^>]*>/g, " ")
+    .replace(/!\[[^\]]*]\(([^)]+)\)/g, " ")
+    .replace(/\[[^\]]+]\(([^)]+)\)/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!withoutTags) {
+    return "본문 미리보기가 없습니다.";
+  }
+
+  return withoutTags.length > max ? `${withoutTags.slice(0, max)}...` : withoutTags;
+}
+
+function formatDate(value: string): string {
+  try {
+    return new Date(value).toLocaleString("ko-KR", {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return value;
+  }
+}
 
 export function BoardPostManager({
   initialActiveBoards,
@@ -37,12 +118,24 @@ export function BoardPostManager({
     slug: "",
     description: "",
     order: "0",
+    isAdminWriteOnly: false,
   });
   const [creating, setCreating] = useState(false);
   const [savingBoardId, setSavingBoardId] = useState<number | null>(null);
   const [mutatingBoardId, setMutatingBoardId] = useState<number | null>(null);
+  const [bulkMutatingKey, setBulkMutatingKey] = useState<string | null>(null);
   const [postPanels, setPostPanels] = useState<Record<number, PostPanelState>>({});
-  const [boardTab, setBoardTab] = useState<"active" | "inactive">("active");
+  const [boardTab, setBoardTab] = useState<BoardTab>("active");
+  const [boardSearchQuery, setBoardSearchQuery] = useState("");
+  const [boardListPageByTab, setBoardListPageByTab] = useState<Record<BoardTab, number>>({
+    active: 1,
+    inactive: 1,
+  });
+  const [selectedBoardByTab, setSelectedBoardByTab] = useState<SelectedBoardByTab>({
+    active: initialActiveBoards[0]?.id ?? null,
+    inactive: initialInactiveBoards[0]?.id ?? null,
+  });
+  const [postManagerBoardId, setPostManagerBoardId] = useState<number | null>(null);
   const [confirmModal, setConfirmModal] = useState<ConfirmModal>(null);
 
   const sortedActiveBoards = useMemo(
@@ -53,16 +146,130 @@ export function BoardPostManager({
     () => [...inactiveBoards].sort((a, b) => a.order - b.order || a.id - b.id),
     [inactiveBoards],
   );
+  const allBoards = useMemo(
+    () => [...sortedActiveBoards, ...sortedInactiveBoards],
+    [sortedActiveBoards, sortedInactiveBoards],
+  );
 
-  function upsertBoard(list: AdminBoard[], board: AdminBoard): AdminBoard[] {
-    const replaced = list.map((item) => (item.id === board.id ? board : item));
-    return replaced.some((item) => item.id === board.id) ? replaced : [board, ...list];
+  const currentBoards = boardTab === "active" ? sortedActiveBoards : sortedInactiveBoards;
+  const normalizedBoardSearchQuery = boardSearchQuery.trim().toLowerCase();
+  const filteredBoards = useMemo(() => {
+    if (!normalizedBoardSearchQuery) {
+      return currentBoards;
+    }
+    return currentBoards.filter((board) => {
+      const title = board.title.toLowerCase();
+      const slug = board.slug.toLowerCase();
+      const description = (board.description ?? "").toLowerCase();
+      return (
+        title.includes(normalizedBoardSearchQuery) ||
+        slug.includes(normalizedBoardSearchQuery) ||
+        description.includes(normalizedBoardSearchQuery)
+      );
+    });
+  }, [currentBoards, normalizedBoardSearchQuery]);
+  const boardListPageSize = 3;
+  const currentBoardListPage = boardListPageByTab[boardTab];
+  const boardListTotalPages = Math.max(1, Math.ceil(filteredBoards.length / boardListPageSize));
+  const visibleBoards = filteredBoards.slice(
+    (currentBoardListPage - 1) * boardListPageSize,
+    currentBoardListPage * boardListPageSize,
+  );
+  const boardListSlots = Array.from(
+    { length: boardListPageSize },
+    (_, index) => visibleBoards[index] ?? null,
+  );
+  const selectedBoard = useMemo(() => {
+    const selectedId = selectedBoardByTab[boardTab];
+    return currentBoards.find((board) => board.id === selectedId) ?? currentBoards[0] ?? null;
+  }, [boardTab, currentBoards, selectedBoardByTab]);
+  const postManagerBoard =
+    allBoards.find((board) => board.id === postManagerBoardId) ?? null;
+
+  useEffect(() => {
+    setSelectedBoardByTab((prev) => {
+      const next: SelectedBoardByTab = { ...prev };
+      let changed = false;
+
+      if (!sortedActiveBoards.some((board) => board.id === next.active)) {
+        next.active = sortedActiveBoards[0]?.id ?? null;
+        changed = true;
+      }
+
+      if (!sortedInactiveBoards.some((board) => board.id === next.inactive)) {
+        next.inactive = sortedInactiveBoards[0]?.id ?? null;
+        changed = true;
+      }
+
+      return changed ? next : prev;
+    });
+  }, [sortedActiveBoards, sortedInactiveBoards]);
+
+  useEffect(() => {
+    setBoardListPageByTab((prev) => {
+      const activeTotalPages = Math.max(1, Math.ceil(sortedActiveBoards.length / boardListPageSize));
+      const inactiveTotalPages = Math.max(1, Math.ceil(sortedInactiveBoards.length / boardListPageSize));
+
+      const nextActive = Math.min(prev.active, activeTotalPages);
+      const nextInactive = Math.min(prev.inactive, inactiveTotalPages);
+
+      if (nextActive === prev.active && nextInactive === prev.inactive) {
+        return prev;
+      }
+
+      return {
+        active: nextActive,
+        inactive: nextInactive,
+      };
+    });
+  }, [boardListPageSize, sortedActiveBoards.length, sortedInactiveBoards.length]);
+
+  useEffect(() => {
+    setBoardListPageByTab((prev) => {
+      if (prev[boardTab] <= boardListTotalPages) {
+        return prev;
+      }
+      return { ...prev, [boardTab]: boardListTotalPages };
+    });
+  }, [boardListTotalPages, boardTab]);
+
+  useEffect(() => {
+    setBoardListPageByTab((prev) => ({ ...prev, [boardTab]: 1 }));
+  }, [boardSearchQuery, boardTab]);
+
+  useEffect(() => {
+    const selectedId = selectedBoardByTab[boardTab];
+    if (selectedId !== null && filteredBoards.some((board) => board.id === selectedId)) {
+      return;
+    }
+    const firstBoardId = filteredBoards[0]?.id ?? null;
+    if (firstBoardId === null) {
+      return;
+    }
+    setSelectedBoardByTab((prev) => ({ ...prev, [boardTab]: firstBoardId }));
+  }, [boardTab, filteredBoards, selectedBoardByTab]);
+
+  useEffect(() => {
+    if (postManagerBoardId === null) {
+      return;
+    }
+    if (!allBoards.some((board) => board.id === postManagerBoardId)) {
+      setPostManagerBoardId(null);
+    }
+  }, [allBoards, postManagerBoardId]);
+
+  function selectBoard(tab: BoardTab, boardId: number) {
+    setBoardTab(tab);
+    setSelectedBoardByTab((prev) => ({ ...prev, [tab]: boardId }));
   }
 
   function editBoard(
     boardId: number,
-    key: keyof Pick<AdminBoard, "title" | "slug" | "description" | "order">,
-    value: string | number | null,
+    key: keyof Pick<
+      AdminBoard,
+      "title" | "slug" | "description" | "order" | "isAdminWriteOnly"
+    >,
+    value: string | number | boolean | null,
     active: boolean,
   ) {
     const setBoards = active ? setActiveBoards : setInactiveBoards;
@@ -80,7 +287,6 @@ export function BoardPostManager({
       readJson<{ boards: AdminBoard[] }>(activeRes),
       readJson<{ boards: AdminBoard[] }>(inactiveRes),
     ]);
-
     setActiveBoards(activeData.boards);
     setInactiveBoards(inactiveData.boards);
   }
@@ -99,11 +305,20 @@ export function BoardPostManager({
           slug: newBoard.slug,
           description: newBoard.description,
           order: Number(newBoard.order),
+          isAdminWriteOnly: newBoard.isAdminWriteOnly,
         }),
       });
       const data = await readJson<{ board: AdminBoard }>(response);
       setActiveBoards((prev) => upsertBoard(prev, data.board));
-      setNewBoard({ title: "", slug: "", description: "", order: "0" });
+      setSelectedBoardByTab((prev) => ({ ...prev, active: data.board.id }));
+      setBoardTab("active");
+      setNewBoard({
+        title: "",
+        slug: "",
+        description: "",
+        order: "0",
+        isAdminWriteOnly: false,
+      });
       onStatus(`게시판 생성 완료: ${data.board.title}`);
     } catch (caught) {
       onStatus(caught instanceof Error ? caught.message : "게시판 생성에 실패했습니다.");
@@ -115,6 +330,7 @@ export function BoardPostManager({
   async function saveBoard(board: AdminBoard, active: boolean) {
     setSavingBoardId(board.id);
     onStatus("");
+
     try {
       const response = await fetch(`/api/admin/boards/${board.id}`, {
         method: "PATCH",
@@ -124,6 +340,7 @@ export function BoardPostManager({
           slug: board.slug,
           description: board.description,
           order: board.order,
+          isAdminWriteOnly: board.isAdminWriteOnly,
         }),
       });
       const data = await readJson<{ board: AdminBoard }>(response);
@@ -140,16 +357,15 @@ export function BoardPostManager({
     }
   }
 
-  function deactivateBoard(boardId: number) {
-    const targetBoard = activeBoards.find((board) => board.id === boardId);
-    const boardTitle = targetBoard?.title ?? "선택한 게시판";
-    setConfirmModal({ type: "deactivate", boardId, boardTitle });
+  function deactivateBoard(board: AdminBoard) {
+    setConfirmModal({ type: "deactivate", boardId: board.id, boardTitle: board.title });
   }
 
   async function executeDeactivate(boardId: number) {
     setConfirmModal(null);
     setMutatingBoardId(boardId);
     onStatus("");
+
     try {
       const response = await fetch(`/api/admin/boards/${boardId}`, {
         method: "PATCH",
@@ -159,9 +375,11 @@ export function BoardPostManager({
       const data = await readJson<{ board: AdminBoard }>(response);
       setActiveBoards((prev) => prev.filter((board) => board.id !== boardId));
       setInactiveBoards((prev) => upsertBoard(prev, data.board));
+      setBoardTab("inactive");
+      setSelectedBoardByTab((prev) => ({ ...prev, inactive: data.board.id }));
       onStatus(`게시판 비활성화 완료: ${data.board.title}`);
     } catch (caught) {
-      onStatus(caught instanceof Error ? caught.message : "비활성화에 실패했습니다.");
+      onStatus(caught instanceof Error ? caught.message : "게시판 비활성화에 실패했습니다.");
     } finally {
       setMutatingBoardId(null);
     }
@@ -170,6 +388,7 @@ export function BoardPostManager({
   async function restoreBoard(boardId: number) {
     setMutatingBoardId(boardId);
     onStatus("");
+
     try {
       const response = await fetch(`/api/admin/boards/${boardId}`, {
         method: "PATCH",
@@ -179,9 +398,11 @@ export function BoardPostManager({
       const data = await readJson<{ board: AdminBoard }>(response);
       setInactiveBoards((prev) => prev.filter((board) => board.id !== boardId));
       setActiveBoards((prev) => upsertBoard(prev, data.board));
+      setBoardTab("active");
+      setSelectedBoardByTab((prev) => ({ ...prev, active: data.board.id }));
       onStatus(`게시판 복구 완료: ${data.board.title}`);
     } catch (caught) {
-      onStatus(caught instanceof Error ? caught.message : "복구에 실패했습니다.");
+      onStatus(caught instanceof Error ? caught.message : "게시판 복구에 실패했습니다.");
     } finally {
       setMutatingBoardId(null);
     }
@@ -206,7 +427,7 @@ export function BoardPostManager({
       setInactiveBoards((prev) => prev.filter((item) => item.id !== board.id));
       onStatus(`게시판 영구 삭제 완료: ${board.title}`);
     } catch (caught) {
-      onStatus(caught instanceof Error ? caught.message : "영구 삭제에 실패했습니다.");
+      onStatus(caught instanceof Error ? caught.message : "게시판 영구 삭제에 실패했습니다.");
     } finally {
       setMutatingBoardId(null);
     }
@@ -228,7 +449,12 @@ export function BoardPostManager({
       const data = await readJson<{ posts: AdminPost[] }>(response);
       setPostPanels((prev) => ({
         ...prev,
-        [boardId]: { scope, posts: data.posts, loading: false, error: null },
+        [boardId]: {
+          scope,
+          posts: data.posts,
+          loading: false,
+          error: null,
+        },
       }));
     } catch (caught) {
       setPostPanels((prev) => ({
@@ -248,6 +474,7 @@ export function BoardPostManager({
     postId: number,
     action:
       | { method: "PATCH"; body: { action: "toggle-publish"; isPublished: boolean } }
+      | { method: "PATCH"; body: { action: "toggle-pin"; isPinned: boolean } }
       | { method: "PATCH"; body: { action: "trash" | "restore" } }
       | { method: "DELETE" },
   ) {
@@ -267,9 +494,104 @@ export function BoardPostManager({
     }
   }
 
+  function createBulkRequest(action: BulkPostAction, postId: number) {
+    if (action === "delete") {
+      return {
+        endpoint: `/api/admin/posts/${postId}`,
+        init: { method: "DELETE" as const },
+      };
+    }
+
+    if (action === "publish" || action === "unpublish") {
+      return {
+        endpoint: `/api/admin/posts/${postId}`,
+        init: {
+          method: "PATCH" as const,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "toggle-publish",
+            isPublished: action === "publish",
+          }),
+        },
+      };
+    }
+
+    if (action === "pin" || action === "unpin") {
+      return {
+        endpoint: `/api/admin/posts/${postId}`,
+        init: {
+          method: "PATCH" as const,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "toggle-pin",
+            isPinned: action === "pin",
+          }),
+        },
+      };
+    }
+
+    return {
+      endpoint: `/api/admin/posts/${postId}`,
+      init: {
+        method: "PATCH" as const,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: action === "trash" ? "trash" : "restore",
+        }),
+      },
+    };
+  }
+
+  async function bulkMutatePosts(
+    boardId: number,
+    scope: PostScope,
+    postIds: number[],
+    action: BulkPostAction,
+  ) {
+    if (postIds.length === 0) {
+      onStatus("선택된 게시글이 없습니다.");
+      return;
+    }
+
+    setBulkMutatingKey(`${boardId}:${scope}:${action}`);
+    onStatus("");
+
+    try {
+      const results = await Promise.allSettled(
+        postIds.map(async (postId) => {
+          const request = createBulkRequest(action, postId);
+          const response = await fetch(request.endpoint, request.init);
+          await readJson(response);
+        }),
+      );
+
+      const successCount = results.filter((item) => item.status === "fulfilled").length;
+      const failedCount = postIds.length - successCount;
+      await loadPosts(boardId, scope);
+      await refreshBoards();
+
+      if (failedCount === 0) {
+        onStatus(`${successCount}개 게시글 일괄 작업이 완료되었습니다.`);
+      } else {
+        onStatus(
+          `${successCount}개 완료, ${failedCount}개 실패했습니다. 잠시 후 다시 시도해 주세요.`,
+        );
+      }
+    } catch (caught) {
+      onStatus(caught instanceof Error ? caught.message : "일괄 작업 처리에 실패했습니다.");
+    } finally {
+      setBulkMutatingKey(null);
+    }
+  }
+
+  function openPostManager(board: AdminBoard) {
+    setPostManagerBoardId(board.id);
+    const scope = postPanels[board.id]?.scope ?? "active";
+    void loadPosts(board.id, scope);
+  }
+
   return (
-    <div className="space-y-6">
-      {/* ── 커스텀 확인 모달 ── */}
+    <div className="relative space-y-6">
       {confirmModal !== null && (
         <ConfirmDialog
           modal={confirmModal}
@@ -283,12 +605,41 @@ export function BoardPostManager({
           onConfirmHardDelete={executeHardDelete}
         />
       )}
-      {/* ── 섹션 A : 게시판 생성 ── */}
+
+      {postManagerBoard !== null && (
+        <PostManagerModal
+          board={postManagerBoard}
+          panel={postPanels[postManagerBoard.id]}
+          bulkMutatingKey={bulkMutatingKey}
+          onClose={() => setPostManagerBoardId(null)}
+          onRefreshPosts={loadPosts}
+          onBulkAction={bulkMutatePosts}
+          onTogglePublish={(boardId, post) =>
+            mutatePost(boardId, post.id, {
+              method: "PATCH",
+              body: { action: "toggle-publish", isPublished: !post.isPublished },
+            })
+          }
+          onTogglePin={(boardId, post) =>
+            mutatePost(boardId, post.id, {
+              method: "PATCH",
+              body: { action: "toggle-pin", isPinned: !post.isPinned },
+            })
+          }
+          onTrashPost={(boardId, post) =>
+            mutatePost(boardId, post.id, { method: "PATCH", body: { action: "trash" } })
+          }
+          onRestorePost={(boardId, post) =>
+            mutatePost(boardId, post.id, { method: "PATCH", body: { action: "restore" } })
+          }
+          onDeletePost={(boardId, post) => mutatePost(boardId, post.id, { method: "DELETE" })}
+        />
+      )}
+
       <section className="rounded-2xl border border-emerald-400/20 bg-emerald-400/5">
-        {/* 섹션 헤더 */}
         <div className="flex items-center gap-3 border-b border-emerald-400/15 px-6 py-4">
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-400/15 text-sm text-emerald-300">
-            ＋
+            +
           </span>
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400">
@@ -298,484 +649,757 @@ export function BoardPostManager({
           </div>
         </div>
 
-        {/* 생성 폼 */}
-        <form onSubmit={createBoard} className="grid gap-3 px-6 py-5 md:grid-cols-4">
+        <form onSubmit={createBoard} className="grid gap-3 px-6 py-5 md:grid-cols-5">
           <input
             value={newBoard.title}
-            onChange={(e) => setNewBoard((p) => ({ ...p, title: e.target.value }))}
+            onChange={(event) => setNewBoard((prev) => ({ ...prev, title: event.target.value }))}
             placeholder="게시판 이름"
             required
             className="rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none focus:border-emerald-400/50"
           />
           <input
             value={newBoard.slug}
-            onChange={(e) => setNewBoard((p) => ({ ...p, slug: e.target.value.trim().toLowerCase() }))}
+            onChange={(event) =>
+              setNewBoard((prev) => ({
+                ...prev,
+                slug: event.target.value.trim().toLowerCase(),
+              }))
+            }
             placeholder="슬러그"
             required
             className="rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none focus:border-emerald-400/50"
           />
           <input
             value={newBoard.description}
-            onChange={(e) => setNewBoard((p) => ({ ...p, description: e.target.value }))}
+            onChange={(event) =>
+              setNewBoard((prev) => ({ ...prev, description: event.target.value }))
+            }
             placeholder="설명 (선택)"
             className="rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none focus:border-emerald-400/50"
           />
-          <div className="flex gap-2">
-            <input
-              type="number"
-              value={newBoard.order}
-              onChange={(e) => setNewBoard((p) => ({ ...p, order: e.target.value }))}
-              className="w-24 rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none focus:border-emerald-400/50"
-            />
+          <input
+            type="number"
+            value={newBoard.order}
+            onChange={(event) => setNewBoard((prev) => ({ ...prev, order: event.target.value }))}
+            className="rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none focus:border-emerald-400/50"
+          />
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-xs text-slate-300">
+              <input
+                type="checkbox"
+                checked={newBoard.isAdminWriteOnly}
+                onChange={(event) =>
+                  setNewBoard((prev) => ({
+                    ...prev,
+                    isAdminWriteOnly: event.target.checked,
+                  }))
+                }
+                className="h-3.5 w-3.5 accent-emerald-400"
+              />
+              관리자 전용 작성
+            </label>
             <button
               type="submit"
               disabled={creating}
-              className="flex-1 rounded-xl bg-gradient-to-r from-emerald-300 to-cyan-300 px-4 py-2 text-sm font-semibold text-zinc-950 disabled:cursor-not-allowed disabled:opacity-70"
+              className="ml-auto rounded-xl bg-gradient-to-r from-emerald-300 to-cyan-300 px-4 py-2 text-sm font-semibold text-zinc-950 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {creating ? "생성 중..." : "게시판 생성"}
+              {creating ? "생성 중.." : "생성"}
             </button>
           </div>
         </form>
       </section>
 
-      {/* ── 섹션 B : 게시판 관리 ── */}
       <section className="rounded-2xl border border-white/10 bg-black/25">
-        {/* 섹션 헤더 + 탭 바 */}
-        <div className="flex flex-col gap-0 border-b border-white/10">
-          {/* 섹션 타이틀 */}
-          <div className="flex items-center gap-3 px-6 pt-4 pb-3">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/8 text-sm text-slate-300">
-              ☰
-            </span>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-                Board Management
-              </p>
-              <h2 className="text-sm font-semibold text-white">게시판 관리</h2>
-            </div>
-          </div>
-
-          {/* 탭 목록 */}
-          <div className="flex px-6">
-            <button
-              type="button"
-              onClick={() => setBoardTab("active")}
-              className={[
-                "relative flex items-center gap-2 pb-2.5 pt-1 text-sm font-semibold transition-colors",
-                "mr-6",
-                boardTab === "active"
-                  ? "text-emerald-300"
-                  : "text-slate-500 hover:text-slate-300",
-              ].join(" ")}
-            >
-              <span
-                className={[
-                  "h-1.5 w-1.5 rounded-full",
-                  boardTab === "active" ? "bg-emerald-400" : "bg-slate-600",
-                ].join(" ")}
-              />
-              활성 게시판
-              <span
-                className={[
-                  "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                  boardTab === "active"
-                    ? "bg-emerald-400/20 text-emerald-300"
-                    : "bg-white/10 text-slate-400",
-                ].join(" ")}
-              >
-                {sortedActiveBoards.length}
-              </span>
-              {/* 활성 탭 언더라인 */}
-              {boardTab === "active" && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-emerald-400" />
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setBoardTab("inactive")}
-              className={[
-                "relative flex items-center gap-2 pb-2.5 pt-1 text-sm font-semibold transition-colors",
-                boardTab === "inactive"
-                  ? "text-amber-300"
-                  : "text-slate-500 hover:text-slate-300",
-              ].join(" ")}
-            >
-              <span
-                className={[
-                  "h-1.5 w-1.5 rounded-full",
-                  boardTab === "inactive" ? "bg-amber-400" : "bg-slate-600",
-                ].join(" ")}
-              />
-              비활성 게시판
-              <span
-                className={[
-                  "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                  boardTab === "inactive"
-                    ? "bg-amber-400/20 text-amber-300"
-                    : "bg-white/10 text-slate-400",
-                ].join(" ")}
-              >
-                {sortedInactiveBoards.length}
-              </span>
-              {/* 활성 탭 언더라인 */}
-              {boardTab === "inactive" && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-amber-400" />
-              )}
-            </button>
-          </div>
+        <div className="border-b border-white/10 px-6 py-4">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+            Board Management
+          </p>
+          <h2 className="text-sm font-semibold text-white">게시판 리스트</h2>
         </div>
 
-        {/* 탭 콘텐츠 */}
-        <div className="px-6 py-5">
-          {boardTab === "active" ? (
-            <BoardColumn
-              label={`활성 게시판 (${sortedActiveBoards.length})`}
-              tone="active"
-              boards={sortedActiveBoards}
-              savingBoardId={savingBoardId}
-              mutatingBoardId={mutatingBoardId}
-              postPanels={postPanels}
-              onEdit={(id, key, value) => editBoard(id, key, value, true)}
-              onSave={(board) => saveBoard(board, true)}
-              onDeactivate={deactivateBoard}
-              onLoadPosts={loadPosts}
-              onTogglePostPublish={(boardId, post) =>
-                mutatePost(boardId, post.id, {
-                  method: "PATCH",
-                  body: { action: "toggle-publish", isPublished: !post.isPublished },
-                })
-              }
-              onTrashPost={(boardId, post) =>
-                mutatePost(boardId, post.id, { method: "PATCH", body: { action: "trash" } })
-              }
-              onRestorePost={(boardId, post) =>
-                mutatePost(boardId, post.id, { method: "PATCH", body: { action: "restore" } })
-              }
-              onDeletePost={(boardId, post) => mutatePost(boardId, post.id, { method: "DELETE" })}
-            />
-          ) : (
-            <BoardColumn
-              label={`비활성 게시판 (${sortedInactiveBoards.length})`}
-              tone="inactive"
-              boards={sortedInactiveBoards}
-              savingBoardId={savingBoardId}
-              mutatingBoardId={mutatingBoardId}
-              postPanels={postPanels}
-              onEdit={(id, key, value) => editBoard(id, key, value, false)}
-              onSave={(board) => saveBoard(board, false)}
-              onRestore={restoreBoard}
-              onHardDelete={hardDeleteBoard}
-              onLoadPosts={loadPosts}
-              onTogglePostPublish={(boardId, post) =>
-                mutatePost(boardId, post.id, {
-                  method: "PATCH",
-                  body: { action: "toggle-publish", isPublished: !post.isPublished },
-                })
-              }
-              onTrashPost={(boardId, post) =>
-                mutatePost(boardId, post.id, { method: "PATCH", body: { action: "trash" } })
-              }
-              onRestorePost={(boardId, post) =>
-                mutatePost(boardId, post.id, { method: "PATCH", body: { action: "restore" } })
-              }
-              onDeletePost={(boardId, post) => mutatePost(boardId, post.id, { method: "DELETE" })}
-            />
-          )}
+        <div className="flex border-b border-white/10 px-6">
+          <button
+            type="button"
+            onClick={() => setBoardTab("active")}
+            className={[
+              "mr-5 py-2 text-sm font-semibold transition-colors",
+              boardTab === "active" ? "text-emerald-300" : "text-slate-500 hover:text-slate-300",
+            ].join(" ")}
+          >
+            활성 게시판 ({sortedActiveBoards.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setBoardTab("inactive")}
+            className={[
+              "py-2 text-sm font-semibold transition-colors",
+              boardTab === "inactive" ? "text-amber-300" : "text-slate-500 hover:text-slate-300",
+            ].join(" ")}
+          >
+            비활성 게시판 ({sortedInactiveBoards.length})
+          </button>
         </div>
-      </section>
-    </div>
-  );
-}
 
-type BoardColumnProps = {
-  label?: string; // 탭 전환 방식 도입 후 헤더 표시 불필요 (하위 호환 유지)
-  tone: "active" | "inactive";
-  boards: AdminBoard[];
-  savingBoardId: number | null;
-  mutatingBoardId: number | null;
-  postPanels: Record<number, PostPanelState>;
-  onEdit: (
-    boardId: number,
-    key: keyof Pick<AdminBoard, "title" | "slug" | "description" | "order">,
-    value: string | number | null,
-  ) => void;
-  onSave: (board: AdminBoard) => void;
-  onDeactivate?: (boardId: number) => void;
-  onRestore?: (boardId: number) => void;
-  onHardDelete?: (board: AdminBoard) => void;
-  onLoadPosts: (boardId: number, scope: PostScope) => void;
-  onTogglePostPublish: (boardId: number, post: AdminPost) => void;
-  onTrashPost: (boardId: number, post: AdminPost) => void;
-  onRestorePost: (boardId: number, post: AdminPost) => void;
-  onDeletePost: (boardId: number, post: AdminPost) => void;
-};
+        <div className="grid gap-6 p-5 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() =>
+                setBoardListPageByTab((prev) => ({
+                  ...prev,
+                  [boardTab]: Math.max(1, prev[boardTab] - 1),
+                }))
+              }
+              disabled={currentBoardListPage === 1}
+              className="h-12 w-12 shrink-0 rounded-full border border-white/20 bg-black/80 text-lg font-bold text-slate-200 transition hover:bg-white/15 disabled:opacity-30"
+              aria-label="이전 게시판 목록"
+            >
+              &lsaquo;
+            </button>
 
-function BoardColumn({
-  label,
-  tone,
-  boards,
-  savingBoardId,
-  mutatingBoardId,
-  postPanels,
-  onEdit,
-  onSave,
-  onDeactivate,
-  onRestore,
-  onHardDelete,
-  onLoadPosts,
-  onTogglePostPublish,
-  onTrashPost,
-  onRestorePost,
-  onDeletePost,
-}: BoardColumnProps) {
-  return (
-    <div className="space-y-3">
-      <h3
-        className={`text-sm font-semibold uppercase tracking-wide ${
-          tone === "active" ? "text-emerald-200" : "text-amber-200"
-        }`}
-      >
-        {label}
-      </h3>
-      {boards.length === 0 ? (
-        <p className="rounded-xl border border-white/10 bg-black/20 px-4 py-6 text-center text-sm text-zinc-500">
-          게시판이 없습니다.
-        </p>
-      ) : null}
-      {boards.map((board) => {
-        const panel = postPanels[board.id];
-        const posts = panel?.posts ?? [];
-        const scope = panel?.scope ?? "active";
-
-        return (
-          <article key={board.id} className="overflow-hidden rounded-xl border border-white/15 bg-black/35">
-            {/* ── 카드 헤더: 게시판 식별 정보 ── */}
-            <div className="flex items-center justify-between border-b border-white/10 bg-black/30 px-4 py-2.5">
-              <div className="flex items-center gap-2">
-                <span className="rounded bg-white/8 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">
-                  #{board.id}
-                </span>
-                <p className="text-sm font-semibold text-white">{board.title}</p>
-                <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] text-slate-400">
-                  /{board.slug}
-                </span>
+            <aside className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/25 p-3">
+              <div className="mb-3 space-y-2">
+                <p className="text-xs font-semibold text-slate-400">게시판 목록</p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="search"
+                    value={boardSearchQuery}
+                    onChange={(event) => setBoardSearchQuery(event.target.value)}
+                    placeholder="제목, 슬러그, 설명 검색"
+                    className="h-9 w-full rounded-lg border border-white/20 bg-black/35 px-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-emerald-300/60"
+                    aria-label="게시판 검색"
+                  />
+                  {boardSearchQuery.trim() ? (
+                    <button
+                      type="button"
+                      onClick={() => setBoardSearchQuery("")}
+                      className="h-9 shrink-0 rounded-lg border border-white/20 px-3 text-xs font-semibold text-slate-300 transition hover:bg-white/10"
+                    >
+                      초기화
+                    </button>
+                  ) : null}
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  {filteredBoards.length}개 / 전체 {currentBoards.length}개
+                </p>
               </div>
-              <span className="text-[11px] text-slate-500">
-                게시글 {board._count?.posts ?? 0}개
-              </span>
-            </div>
 
-            {/* ── 필드 편집 그리드 ── */}
-            <div className="grid gap-x-4 gap-y-3 p-4 sm:grid-cols-2">
-              {/* 이름 */}
-              <label className="flex flex-col gap-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                  이름
-                </span>
-                <input
-                  value={board.title}
-                  onChange={(e) => onEdit(board.id, "title", e.target.value)}
-                  className="rounded-lg border border-white/20 bg-black/35 px-3 py-1.5 text-sm text-white outline-none focus:border-white/40"
-                />
-              </label>
+              <div className="space-y-2">
+                {currentBoards.length === 0 && (
+                  <p className="rounded-lg border border-white/10 bg-black/20 px-3 py-4 text-center text-sm text-slate-500">
+                    게시판이 없습니다.
+                  </p>
+                )}
 
-              {/* 슬러그 */}
-              <label className="flex flex-col gap-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                  슬러그 (URL 경로)
-                </span>
-                <input
-                  value={board.slug}
-                  onChange={(e) => onEdit(board.id, "slug", e.target.value.trim().toLowerCase())}
-                  className="rounded-lg border border-white/20 bg-black/35 px-3 py-1.5 font-mono text-sm text-white outline-none focus:border-white/40"
-                />
-              </label>
+                {currentBoards.length > 0 && filteredBoards.length === 0 && (
+                  <p className="rounded-lg border border-white/10 bg-black/20 px-3 py-4 text-center text-sm text-slate-500">
+                    검색 결과가 없습니다.
+                  </p>
+                )}
 
-              {/* 설명 */}
-              <label className="flex flex-col gap-1 sm:col-span-2">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                  설명
-                </span>
-                <input
-                  value={board.description ?? ""}
-                  onChange={(e) => onEdit(board.id, "description", e.target.value)}
-                  placeholder="(없음)"
-                  className="rounded-lg border border-white/20 bg-black/35 px-3 py-1.5 text-sm text-white outline-none focus:border-white/40 placeholder:text-slate-600"
-                />
-              </label>
+                {boardListSlots.map((board, index) => {
+                  if (board === null) {
+                    return (
+                      <div
+                        key={`empty-slot-${boardTab}-${currentBoardListPage}-${index}`}
+                        aria-hidden="true"
+                        className="h-[92px] w-full rounded-lg border border-white/10 bg-black/15"
+                      />
+                    );
+                  }
 
-              {/* 표시 순서 */}
-              <label className="flex flex-col gap-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                  표시 순서
-                </span>
-                <input
-                  type="number"
-                  value={board.order}
-                  onChange={(e) => onEdit(board.id, "order", Number(e.target.value))}
-                  className="w-28 rounded-lg border border-white/20 bg-black/35 px-3 py-1.5 text-sm text-white outline-none focus:border-white/40"
-                />
-              </label>
-            </div>
+                  const isSelected = selectedBoard?.id === board.id;
+                  return (
+                    <button
+                      key={board.id}
+                      type="button"
+                      onClick={() => selectBoard(boardTab, board.id)}
+                      className={[
+                        "h-[92px] w-full rounded-lg border px-3 py-3 text-left transition",
+                        isSelected
+                          ? "border-emerald-300/50 bg-emerald-400/10"
+                          : "border-white/10 bg-black/25 hover:border-white/25",
+                      ].join(" ")}
+                    >
+                      <p className="truncate text-sm font-semibold text-white">{board.title}</p>
+                      <p className="mt-1 truncate text-xs text-slate-400">/{board.slug}</p>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-slate-300">
+                          글 {board._count?.posts ?? 0}
+                        </span>
+                        {board.isAdminWriteOnly && (
+                          <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] text-amber-200">
+                            관리자 전용 작성
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </aside>
 
-            {/* ── 액션 버튼 ── */}
-            <div className="flex flex-wrap items-center gap-2 border-t border-white/10 bg-black/20 px-4 py-3">
-              <button
-                type="button"
-                disabled={savingBoardId === board.id}
-                onClick={() => onSave(board)}
-                className="rounded-full border border-emerald-300/50 px-3 py-1 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-400/10 disabled:opacity-60"
-              >
-                {savingBoardId === board.id ? "저장 중..." : "저장"}
-              </button>
+            <button
+              type="button"
+              onClick={() =>
+                setBoardListPageByTab((prev) => ({
+                  ...prev,
+                  [boardTab]: Math.min(boardListTotalPages, prev[boardTab] + 1),
+                }))
+              }
+              disabled={currentBoardListPage === boardListTotalPages}
+              className="h-12 w-12 shrink-0 rounded-full border border-white/20 bg-black/80 text-lg font-bold text-slate-200 transition hover:bg-white/15 disabled:opacity-30"
+              aria-label="다음 게시판 목록"
+            >
+              &rsaquo;
+            </button>
+          </div>
 
-              {tone === "active" ? (
-                <button
-                  type="button"
-                  disabled={mutatingBoardId === board.id}
-                  onClick={() => onDeactivate?.(board.id)}
-                  className="rounded-full border border-amber-300/50 px-3 py-1 text-xs font-semibold text-amber-100 transition hover:bg-amber-400/10 disabled:opacity-60"
-                >
-                  {mutatingBoardId === board.id ? "처리 중..." : "비활성화"}
-                </button>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    disabled={mutatingBoardId === board.id}
-                    onClick={() => onRestore?.(board.id)}
-                    className="rounded-full border border-emerald-300/50 px-3 py-1 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-400/10 disabled:opacity-60"
-                  >
-                    {mutatingBoardId === board.id ? "처리 중..." : "복구"}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={mutatingBoardId === board.id}
-                    onClick={() => onHardDelete?.(board)}
-                    className="rounded-full border border-rose-300/50 px-3 py-1 text-xs font-semibold text-rose-100 transition hover:bg-rose-400/10 disabled:opacity-60"
-                  >
-                    {mutatingBoardId === board.id ? "처리 중..." : "최종 삭제"}
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* ── 게시글 관리 ── */}
-            <details className="border-t border-white/10">
-              <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-xs font-semibold text-slate-400 transition hover:text-slate-200">
-                <span>게시글 관리</span>
-                <span className="select-none text-slate-600">▾</span>
-              </summary>
-
-              <div className="space-y-2 border-t border-white/8 px-4 py-3">
-                {/* 게시글 범위 탭 */}
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onLoadPosts(board.id, "active")}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                      scope === "active"
-                        ? "bg-emerald-300 text-zinc-950"
-                        : "border border-white/25 text-zinc-400 hover:text-zinc-100"
-                    }`}
-                  >
-                    활성
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onLoadPosts(board.id, "trash")}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                      scope === "trash"
-                        ? "bg-amber-300 text-zinc-950"
-                        : "border border-white/25 text-zinc-400 hover:text-zinc-100"
-                    }`}
-                  >
-                    휴지통
-                  </button>
+          <div className="min-w-0 rounded-xl border border-white/10 bg-black/25 p-4">
+            {selectedBoard === null ? (
+              <p className="py-8 text-center text-sm text-slate-500">
+                왼쪽 목록에서 게시판을 선택해 주세요.
+              </p>
+            ) : (
+              <>
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wider text-slate-500">
+                      Selected Board
+                    </p>
+                    <h3 className="text-lg font-semibold text-white">{selectedBoard.title}</h3>
+                  </div>
                 </div>
 
-                {panel?.loading && (
-                  <p className="text-xs text-slate-500">불러오는 중...</p>
-                )}
-                {panel?.error && (
-                  <p className="text-xs text-rose-300">{panel.error}</p>
-                )}
-                {!panel?.loading && posts.length === 0 && (
-                  <p className="text-xs text-slate-600">게시글이 없습니다.</p>
-                )}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="flex flex-col gap-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                      제목
+                    </span>
+                    <input
+                      value={selectedBoard.title}
+                      onChange={(event) =>
+                        editBoard(
+                          selectedBoard.id,
+                          "title",
+                          event.target.value,
+                          boardTab === "active",
+                        )
+                      }
+                      className="rounded-lg border border-white/20 bg-black/35 px-3 py-1.5 text-sm text-white outline-none focus:border-white/40"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                      슬러그
+                    </span>
+                    <input
+                      value={selectedBoard.slug}
+                      onChange={(event) =>
+                        editBoard(
+                          selectedBoard.id,
+                          "slug",
+                          event.target.value.trim().toLowerCase(),
+                          boardTab === "active",
+                        )
+                      }
+                      className="rounded-lg border border-white/20 bg-black/35 px-3 py-1.5 font-mono text-sm text-white outline-none focus:border-white/40"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 sm:col-span-2">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                      설명
+                    </span>
+                    <input
+                      value={selectedBoard.description ?? ""}
+                      onChange={(event) =>
+                        editBoard(
+                          selectedBoard.id,
+                          "description",
+                          event.target.value,
+                          boardTab === "active",
+                        )
+                      }
+                      className="rounded-lg border border-white/20 bg-black/35 px-3 py-1.5 text-sm text-white outline-none focus:border-white/40"
+                    />
+                  </label>
+                  <div className="sm:col-span-2 flex flex-wrap items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+                    <label className="flex items-center gap-2 text-sm text-slate-300">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                        정렬 순서
+                      </span>
+                      <input
+                        type="number"
+                        value={selectedBoard.order}
+                        onChange={(event) =>
+                          editBoard(
+                            selectedBoard.id,
+                            "order",
+                            Number(event.target.value),
+                            boardTab === "active",
+                          )
+                        }
+                        className="h-8 w-24 rounded-lg border border-white/20 bg-black/35 px-2 text-sm text-white outline-none focus:border-white/40"
+                      />
+                    </label>
 
-                {/* 게시글 목록 */}
-                {posts.map((post) => (
-                  <div key={post.id} className="rounded-lg border border-white/10 bg-black/30 px-3 py-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-white">{post.title}</p>
-                        <p className="mt-0.5 text-[11px] text-slate-500">{post.author.email}</p>
-                      </div>
-                      {!post.deletedAt && (
-                        <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                            post.isPublished
-                              ? "bg-emerald-400/15 text-emerald-300"
-                              : "bg-white/8 text-slate-500"
-                          }`}
+                    <label className="flex items-center gap-2 text-sm text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={selectedBoard.isAdminWriteOnly}
+                        onChange={(event) =>
+                          editBoard(
+                            selectedBoard.id,
+                            "isAdminWriteOnly",
+                            event.target.checked,
+                            boardTab === "active",
+                          )
+                        }
+                        className="h-3.5 w-3.5 accent-emerald-400"
+                      />
+                      관리자만 작성 가능
+                    </label>
+
+                    <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        disabled={savingBoardId === selectedBoard.id}
+                        onClick={() => saveBoard(selectedBoard, boardTab === "active")}
+                        className="rounded-full border border-emerald-300/50 px-3 py-1 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-400/10 disabled:opacity-60"
+                      >
+                        {savingBoardId === selectedBoard.id ? "저장 중.." : "저장"}
+                      </button>
+
+                      {boardTab === "active" ? (
+                        <button
+                          type="button"
+                          disabled={mutatingBoardId === selectedBoard.id}
+                          onClick={() => deactivateBoard(selectedBoard)}
+                          className="rounded-full border border-amber-300/50 px-3 py-1 text-xs font-semibold text-amber-100 transition hover:bg-amber-400/10 disabled:opacity-60"
                         >
-                          {post.isPublished ? "공개" : "비공개"}
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {!post.deletedAt ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => onTogglePostPublish(board.id, post)}
-                            className="rounded-full border border-cyan-300/50 px-2 py-0.5 text-[11px] font-semibold text-cyan-100 transition hover:bg-cyan-400/10"
-                          >
-                            {post.isPublished ? "비공개 전환" : "공개 전환"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onTrashPost(board.id, post)}
-                            className="rounded-full border border-amber-300/50 px-2 py-0.5 text-[11px] font-semibold text-amber-100 transition hover:bg-amber-400/10"
-                          >
-                            휴지통 이동
-                          </button>
-                        </>
+                          {mutatingBoardId === selectedBoard.id ? "처리 중.." : "비활성화"}
+                        </button>
                       ) : (
                         <>
                           <button
                             type="button"
-                            onClick={() => onRestorePost(board.id, post)}
-                            className="rounded-full border border-emerald-300/50 px-2 py-0.5 text-[11px] font-semibold text-emerald-100 transition hover:bg-emerald-400/10"
+                            disabled={mutatingBoardId === selectedBoard.id}
+                            onClick={() => restoreBoard(selectedBoard.id)}
+                            className="rounded-full border border-emerald-300/50 px-3 py-1 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-400/10 disabled:opacity-60"
                           >
-                            복구
+                            {mutatingBoardId === selectedBoard.id ? "처리 중.." : "복구"}
                           </button>
                           <button
                             type="button"
-                            onClick={() => onDeletePost(board.id, post)}
-                            className="rounded-full border border-rose-300/50 px-2 py-0.5 text-[11px] font-semibold text-rose-100 transition hover:bg-rose-400/10"
+                            disabled={mutatingBoardId === selectedBoard.id}
+                            onClick={() => hardDeleteBoard(selectedBoard)}
+                            className="rounded-full border border-rose-300/50 px-3 py-1 text-xs font-semibold text-rose-100 transition hover:bg-rose-400/10 disabled:opacity-60"
                           >
-                            영구 삭제
+                            {mutatingBoardId === selectedBoard.id ? "처리 중.." : "최종 삭제"}
                           </button>
                         </>
                       )}
                     </div>
                   </div>
-                ))}
-              </div>
-            </details>
-          </article>
-        );
-      })}
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center border-t border-white/10 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => openPostManager(selectedBoard)}
+                    className="rounded-full border border-cyan-300/50 px-4 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-400/10"
+                  >
+                    게시글 관리 열기
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
+function PostManagerModal({
+  board,
+  panel,
+  bulkMutatingKey,
+  onClose,
+  onRefreshPosts,
+  onBulkAction,
+  onTogglePublish,
+  onTogglePin,
+  onTrashPost,
+  onRestorePost,
+  onDeletePost,
+}: PostManagerModalProps) {
+  const scope = panel?.scope ?? "active";
+  const posts = panel?.posts ?? [];
+  const [selectedPostIds, setSelectedPostIds] = useState<number[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 6;
+  const isBulkMutating = bulkMutatingKey?.startsWith(`${board.id}:${scope}:`) ?? false;
+  const allChecked =
+    posts.length > 0 && posts.every((post) => selectedPostIds.includes(post.id));
+  const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+  const currentPagePosts = posts.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
+  const pageBlockStart = Math.floor((currentPage - 1) / 10) * 10 + 1;
+  const pageBlockEnd = Math.min(pageBlockStart + 9, totalPages);
+  const pageNumbers = Array.from(
+    { length: pageBlockEnd - pageBlockStart + 1 },
+    (_, index) => pageBlockStart + index,
+  );
 
-// ════════════════════════════════════════════════════════
-//  커스텀 확인 다이얼로그
-// ════════════════════════════════════════════════════════
+  useEffect(() => {
+    setSelectedPostIds((prev) => prev.filter((id) => posts.some((post) => post.id === id)));
+  }, [posts]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [scope, board.id]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  function togglePost(postId: number, checked: boolean) {
+    setSelectedPostIds((prev) => {
+      if (checked) {
+        return prev.includes(postId) ? prev : [...prev, postId];
+      }
+      return prev.filter((id) => id !== postId);
+    });
+  }
+
+  function toggleAll(checked: boolean) {
+    setSelectedPostIds(checked ? posts.map((post) => post.id) : []);
+  }
+
+  async function runBulkAction(action: BulkPostAction) {
+    if (selectedPostIds.length === 0) {
+      return;
+    }
+    await onBulkAction(board.id, scope, selectedPostIds, action);
+    setSelectedPostIds([]);
+  }
+
+  return (
+    <div className="absolute inset-0 z-[90] bg-black/70 backdrop-blur-sm">
+      <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#090d12]">
+        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-cyan-400">
+              Post Management
+            </p>
+            <h3 className="text-lg font-semibold text-white">
+              {board.title} 게시글 집중 관리
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-white/20 px-3 py-1 text-xs font-semibold text-slate-300 transition hover:bg-white/10"
+          >
+            닫기
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2 border-b border-white/10 px-6 py-3">
+          <button
+            type="button"
+            onClick={() => onRefreshPosts(board.id, "active")}
+            className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+              scope === "active"
+                ? "bg-emerald-300 text-zinc-950"
+                : "border border-white/25 text-zinc-400 hover:text-zinc-100"
+            }`}
+          >
+            활성
+          </button>
+          <button
+            type="button"
+            onClick={() => onRefreshPosts(board.id, "trash")}
+            className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+              scope === "trash"
+                ? "bg-amber-300 text-zinc-950"
+                : "border border-white/25 text-zinc-400 hover:text-zinc-100"
+            }`}
+          >
+            휴지통
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5 border-b border-white/10 px-6 py-3">
+          <label className="mr-2 flex items-center gap-1 text-[11px] text-slate-300">
+            <input
+              type="checkbox"
+              checked={allChecked}
+              disabled={posts.length === 0 || isBulkMutating}
+              onChange={(event) => toggleAll(event.target.checked)}
+              className="h-3.5 w-3.5 accent-emerald-400"
+            />
+            전체 선택
+          </label>
+          <span className="mr-2 text-[11px] text-slate-500">
+            {selectedPostIds.length}개 선택됨
+          </span>
+          {scope === "active" ? (
+            <>
+              <button
+                type="button"
+                disabled={selectedPostIds.length === 0 || isBulkMutating}
+                onClick={() => runBulkAction("publish")}
+                className="rounded-full border border-emerald-300/40 px-2 py-0.5 text-[11px] font-semibold text-emerald-100 transition hover:bg-emerald-400/10 disabled:opacity-40"
+              >
+                일괄 공개
+              </button>
+              <button
+                type="button"
+                disabled={selectedPostIds.length === 0 || isBulkMutating}
+                onClick={() => runBulkAction("unpublish")}
+                className="rounded-full border border-slate-300/40 px-2 py-0.5 text-[11px] font-semibold text-slate-100 transition hover:bg-slate-400/10 disabled:opacity-40"
+              >
+                일괄 비공개
+              </button>
+              <button
+                type="button"
+                disabled={selectedPostIds.length === 0 || isBulkMutating}
+                onClick={() => runBulkAction("pin")}
+                className="rounded-full border border-cyan-300/40 px-2 py-0.5 text-[11px] font-semibold text-cyan-100 transition hover:bg-cyan-400/10 disabled:opacity-40"
+              >
+                일괄 상단고정
+              </button>
+              <button
+                type="button"
+                disabled={selectedPostIds.length === 0 || isBulkMutating}
+                onClick={() => runBulkAction("unpin")}
+                className="rounded-full border border-cyan-300/40 px-2 py-0.5 text-[11px] font-semibold text-cyan-100 transition hover:bg-cyan-400/10 disabled:opacity-40"
+              >
+                일괄 고정해제
+              </button>
+              <button
+                type="button"
+                disabled={selectedPostIds.length === 0 || isBulkMutating}
+                onClick={() => runBulkAction("trash")}
+                className="rounded-full border border-amber-300/40 px-2 py-0.5 text-[11px] font-semibold text-amber-100 transition hover:bg-amber-400/10 disabled:opacity-40"
+              >
+                일괄 휴지통 이동
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                disabled={selectedPostIds.length === 0 || isBulkMutating}
+                onClick={() => runBulkAction("restore")}
+                className="rounded-full border border-emerald-300/40 px-2 py-0.5 text-[11px] font-semibold text-emerald-100 transition hover:bg-emerald-400/10 disabled:opacity-40"
+              >
+                일괄 복구
+              </button>
+              <button
+                type="button"
+                disabled={selectedPostIds.length === 0 || isBulkMutating}
+                onClick={() => runBulkAction("delete")}
+                className="rounded-full border border-rose-300/40 px-2 py-0.5 text-[11px] font-semibold text-rose-100 transition hover:bg-rose-400/10 disabled:opacity-40"
+              >
+                일괄 영구 삭제
+              </button>
+            </>
+          )}
+        </div>
+
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-6 py-4">
+          {panel?.loading && <p className="text-sm text-slate-400">게시글을 불러오는 중입니다...</p>}
+          {panel?.error && <p className="text-sm text-rose-300">{panel.error}</p>}
+          {!panel?.loading && posts.length === 0 && (
+            <p className="text-sm text-slate-500">게시글이 없습니다.</p>
+          )}
+
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-2 md:grid-rows-3">
+            {currentPagePosts.map((post) => {
+              const previewImage = extractFirstImageUrl(post.content);
+              const previewText = toPreviewText(post.content);
+
+              return (
+                <article
+                  key={post.id}
+                  className="flex h-full min-h-0 flex-col rounded-xl border border-white/10 bg-black/30 p-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex min-w-0 items-start gap-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedPostIds.includes(post.id)}
+                        disabled={isBulkMutating}
+                        onChange={(event) => togglePost(post.id, event.target.checked)}
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-emerald-400"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-white">{post.title}</p>
+                        <p className="text-[11px] text-slate-500">
+                          {post.author.email} · {formatDate(post.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      {post.isPinned && !post.deletedAt && (
+                        <span className="rounded-full bg-cyan-400/15 px-2 py-0.5 text-[10px] text-cyan-200">
+                          고정
+                        </span>
+                      )}
+                      {!post.deletedAt && (
+                        <span
+                          className={[
+                            "rounded-full px-2 py-0.5 text-[10px]",
+                            post.isPublished
+                              ? "bg-emerald-400/15 text-emerald-300"
+                              : "bg-white/10 text-slate-400",
+                          ].join(" ")}
+                        >
+                          {post.isPublished ? "공개" : "비공개"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex gap-3">
+                    <div className="h-16 w-24 shrink-0 overflow-hidden rounded-md border border-white/10 bg-black/40">
+                      {previewImage ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={previewImage}
+                          alt="게시글 미리보기"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-[10px] text-slate-500">
+                          No Image
+                        </div>
+                      )}
+                    </div>
+                    <p className="line-clamp-2 text-xs leading-relaxed text-slate-400">{previewText}</p>
+                  </div>
+
+                  <div className="mt-auto flex gap-1 overflow-x-auto pt-2">
+                    {!post.deletedAt ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled={isBulkMutating}
+                          onClick={() => onTogglePublish(board.id, post)}
+                          className="rounded-full border border-cyan-300/50 px-2 py-0.5 text-[11px] font-semibold text-cyan-100 transition hover:bg-cyan-400/10 disabled:opacity-40"
+                        >
+                          {post.isPublished ? "비공개 전환" : "공개 전환"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isBulkMutating}
+                          onClick={() => onTogglePin(board.id, post)}
+                          className="rounded-full border border-cyan-300/50 px-2 py-0.5 text-[11px] font-semibold text-cyan-100 transition hover:bg-cyan-400/10 disabled:opacity-40"
+                        >
+                          {post.isPinned ? "고정 해제" : "상단 고정"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isBulkMutating}
+                          onClick={() => onTrashPost(board.id, post)}
+                          className="rounded-full border border-amber-300/50 px-2 py-0.5 text-[11px] font-semibold text-amber-100 transition hover:bg-amber-400/10 disabled:opacity-40"
+                        >
+                          휴지통 이동
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          disabled={isBulkMutating}
+                          onClick={() => onRestorePost(board.id, post)}
+                          className="rounded-full border border-emerald-300/50 px-2 py-0.5 text-[11px] font-semibold text-emerald-100 transition hover:bg-emerald-400/10 disabled:opacity-40"
+                        >
+                          복구
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isBulkMutating}
+                          onClick={() => onDeletePost(board.id, post)}
+                          className="rounded-full border border-rose-300/50 px-2 py-0.5 text-[11px] font-semibold text-rose-100 transition hover:bg-rose-400/10 disabled:opacity-40"
+                        >
+                          영구 삭제
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          {posts.length > 0 && (
+            <div className="mt-4 flex shrink-0 items-center justify-center gap-1">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 10))}
+                disabled={currentPage === 1}
+                className="w-8 rounded-md border border-white/20 py-1 text-xs text-slate-300 transition hover:bg-white/10 disabled:opacity-40"
+                aria-label="10 pages previous"
+              >
+                &laquo;
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="w-8 rounded-md border border-white/20 py-1 text-xs text-slate-300 transition hover:bg-white/10 disabled:opacity-40"
+                aria-label="previous page"
+              >
+                &lsaquo;
+              </button>
+
+              {pageNumbers.map((pageNumber) => (
+                <button
+                  key={pageNumber}
+                  type="button"
+                  onClick={() => setCurrentPage(pageNumber)}
+                  className={[
+                    "rounded-md border px-2.5 py-1 text-xs font-semibold transition",
+                    pageNumber === currentPage
+                      ? "border-emerald-300/60 bg-emerald-400/20 text-emerald-100"
+                      : "border-white/20 text-slate-300 hover:bg-white/10",
+                  ].join(" ")}
+                >
+                  {pageNumber}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="w-8 rounded-md border border-white/20 py-1 text-xs text-slate-300 transition hover:bg-white/10 disabled:opacity-40"
+                aria-label="next page"
+              >
+                &rsaquo;
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 10))}
+                disabled={currentPage === totalPages}
+                className="w-8 rounded-md border border-white/20 py-1 text-xs text-slate-300 transition hover:bg-white/10 disabled:opacity-40"
+                aria-label="10 pages next"
+              >
+                &raquo;
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 type ConfirmDialogProps = {
   modal: NonNullable<ConfirmModal>;
   onUpdateInput: (value: string) => void;
@@ -797,12 +1421,10 @@ function ConfirmDialog({
   const isDeleteDisabled = isHardDelete && inputValue !== modal.board.title;
 
   return (
-    /* 오버레이 */
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={onCancel}
     >
-      {/* 다이얼로그 카드 */}
       <div
         className="relative mx-4 w-full max-w-md overflow-hidden rounded-2xl border bg-[#0d1117] shadow-2xl"
         style={{
@@ -810,9 +1432,8 @@ function ConfirmDialog({
             ? "rgba(248,113,113,0.3)"
             : "rgba(251,191,36,0.3)",
         }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
       >
-        {/* 상단 강조 바 */}
         <div
           className="h-1 w-full"
           style={{
@@ -823,7 +1444,6 @@ function ConfirmDialog({
         />
 
         <div className="px-6 py-5">
-          {/* 아이콘 + 제목 */}
           <div className="flex items-start gap-4">
             <span
               className={[
@@ -833,7 +1453,7 @@ function ConfirmDialog({
                   : "bg-amber-400/15 text-amber-300",
               ].join(" ")}
             >
-              {isHardDelete ? "🗑️" : "⚠️"}
+              {isHardDelete ? "⚠" : "?"}
             </span>
 
             <div>
@@ -849,7 +1469,7 @@ function ConfirmDialog({
                 {isHardDelete ? (
                   <>
                     <span className="font-semibold text-white">{targetTitle}</span>{" "}
-                    게시판과 모든 게시글이 영구 삭제됩니다.
+                    게시판과 모든 게시글을 영구 삭제합니다.
                     <br />
                     <span className="text-rose-300">이 작업은 되돌릴 수 없습니다.</span>
                   </>
@@ -858,19 +1478,18 @@ function ConfirmDialog({
                     <span className="font-semibold text-white">{targetTitle}</span>{" "}
                     게시판을 비활성화합니다.
                     <br />
-                    비활성 탭에서 언제든 복구할 수 있습니다.
+                    비활성 구역에서 복구할 수 있습니다.
                   </>
                 )}
               </p>
             </div>
           </div>
 
-          {/* 영구 삭제 전용: 이름 재입력 확인 */}
           {isHardDelete && (
             <div className="mt-4">
               <label className="flex flex-col gap-1.5">
                 <span className="text-[11px] font-semibold text-slate-400">
-                  확인을 위해 게시판 이름을 정확히 입력해 주세요
+                  게시판 이름을 정확히 입력해야 삭제할 수 있습니다.
                 </span>
                 <span className="rounded bg-white/5 px-2 py-1 font-mono text-xs text-rose-200">
                   {targetTitle}
@@ -879,7 +1498,7 @@ function ConfirmDialog({
                   autoFocus
                   type="text"
                   value={inputValue}
-                  onChange={(e) => onUpdateInput(e.target.value)}
+                  onChange={(event) => onUpdateInput(event.target.value)}
                   placeholder={targetTitle}
                   className="rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-rose-400/60 placeholder:text-slate-600"
                 />
@@ -887,7 +1506,6 @@ function ConfirmDialog({
             </div>
           )}
 
-          {/* 버튼 */}
           <div className="mt-5 flex justify-end gap-2">
             <button
               type="button"

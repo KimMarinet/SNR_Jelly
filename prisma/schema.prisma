@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -14,12 +15,23 @@ enum AssetCategory {
   COMMON
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  posts     Post[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           Int        @id @default(autoincrement())
+  email        String     @unique
+  passwordHash String?
+  nickname     String     @default("new-user")
+  role         UserRole   @default(USER)
+  posts        Post[]
+  comments     Comment[]
+  postLikes    PostLike[]
+  postViews    PostView[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }
 
 model Board {
@@ -29,6 +41,7 @@ model Board {
   description String?
   order       Int      @default(0)
   isActive    Boolean  @default(true)
+  isAdminWriteOnly Boolean @default(false)
   posts       Post[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -43,15 +56,61 @@ model Post {
   title       String
   content     String    @db.LongText
   isPublished Boolean   @default(true)
+  isPinned    Boolean   @default(false)
+  likeCount   Int       @default(0)
+  viewCount   Int       @default(0)
   deletedAt   DateTime?
   board       Board     @relation(fields: [boardId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   author      User      @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  comments    Comment[]
+  likes       PostLike[]
+  views       PostView[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@index([boardId])
   @@index([authorId])
   @@index([isPublished, deletedAt])
+  @@index([createdAt])
+  @@index([isPinned, isPublished, deletedAt])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  authorId  Int
+  content   String   @db.Text
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([postId, createdAt])
+  @@index([authorId])
+}
+
+model PostLike {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+  @@index([userId])
+}
+
+model PostView {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+  @@index([userId])
 }
 
 model Asset {
@@ -68,4 +127,16 @@ model Asset {
   updatedAt    DateTime      @updatedAt
 
   @@index([category, deletedAt])
+}
+
+model LandingVideo {
+  id        Int      @id @default(autoincrement())
+  title     String?
+  youtubeId String   @unique
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, order])
 }

@@ -1,4 +1,4 @@
-import type { AssetCategory } from "@prisma/client";
+import type { AssetCategory } from "@/generated/prisma";
 
 export type AdminBoard = {
   id: number;
@@ -7,6 +7,7 @@ export type AdminBoard = {
   description: string | null;
   order: number;
   isActive: boolean;
+  isAdminWriteOnly: boolean;
   _count?: { posts: number };
 };
 
@@ -27,11 +28,23 @@ export type AdminPost = {
   id: number;
   boardId: number;
   title: string;
+  content: string;
   isPublished: boolean;
+  isPinned: boolean;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
   author: {
     email: string;
   };
+};
+
+export type AdminLandingVideo = {
+  id: number;
+  title: string | null;
+  youtubeId: string;
+  order: number;
+  isActive: boolean;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 };

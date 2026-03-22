@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Black_Han_Sans, Noto_Sans_KR } from "next/font/google";
+import "@toast-ui/editor/dist/toastui-editor.css";
 import "./globals.css";
 
 const notoSansKr = Noto_Sans_KR({
@@ -18,6 +19,8 @@ export const metadata: Metadata = {
   description: "세븐나이츠 리버스 공략 커뮤니티로 진입하는 프리-랜딩",
 };
 
+const themeInitScript = `(function(){try{var key='snr-theme-mode';var saved=localStorage.getItem(key);var theme=(saved==='light'||saved==='dark')?saved:(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',theme);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -26,8 +29,13 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
+      data-theme="dark"
+      suppressHydrationWarning
       className={`${notoSansKr.variable} ${blackHanSans.variable} h-full antialiased`}
     >
+      <head>
+        <script id="theme-init" dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-full">{children}</body>
     </html>
   );

@@ -1,17 +1,19 @@
-import { Prisma } from "@prisma/client";
+﻿import { revalidatePath, revalidateTag } from "next/cache";
+import { Prisma } from "@/generated/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import { hasAdminSessionFromRequest } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { getAdminSession } from "@/lib/route-auth";
 
 type CreateBoardBody = {
   title?: string;
   slug?: string;
   description?: string | null;
   order?: number;
+  isAdminWriteOnly?: boolean;
 };
 
 function unauthorizedResponse() {
-  return NextResponse.json({ message: "관리자 권한이 필요합니다." }, { status: 401 });
+  return NextResponse.json({ message: "Admin authorization required." }, { status: 401 });
 }
 
 function normalizeSlug(slug: string): string {
@@ -34,13 +36,13 @@ function parseCreateBoardBody(body: CreateBoardBody) {
   const slug = normalizeSlug(body.slug ?? "");
 
   if (!title) {
-    return { ok: false as const, message: "게시판 이름은 필수입니다." };
+    return { ok: false as const, message: "Board title is required." };
   }
 
   if (!slug || !isValidSlug(slug)) {
     return {
       ok: false as const,
-      message: "슬러그는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.",
+      message: "Slug may contain only lowercase letters, numbers, and hyphens.",
     };
   }
 
@@ -51,12 +53,14 @@ function parseCreateBoardBody(body: CreateBoardBody) {
       slug,
       description: body.description?.trim() || null,
       order: Number.isFinite(body.order) ? Number(body.order) : 0,
+      isAdminWriteOnly: body.isAdminWriteOnly === true,
     },
   };
 }
 
 export async function GET(request: NextRequest) {
-  if (!hasAdminSessionFromRequest(request)) {
+  const admin = await getAdminSession();
+  if (!admin) {
     return unauthorizedResponse();
   }
 
@@ -77,6 +81,7 @@ export async function GET(request: NextRequest) {
       description: true,
       order: true,
       isActive: true,
+      isAdminWriteOnly: true,
       _count: {
         select: { posts: true },
       },
@@ -87,7 +92,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!hasAdminSessionFromRequest(request)) {
+  const admin = await getAdminSession();
+  if (!admin) {
     return unauthorizedResponse();
   }
 
@@ -111,11 +117,16 @@ export async function POST(request: NextRequest) {
         description: true,
         order: true,
         isActive: true,
+        isAdminWriteOnly: true,
         _count: {
           select: { posts: true },
         },
       },
     });
+
+    revalidateTag("board-navigation", "max");
+    revalidatePath("/lounge");
+    revalidatePath(`/board/${board.slug}`);
 
     return NextResponse.json({ board }, { status: 201 });
   } catch (error) {
@@ -124,11 +135,11 @@ export async function POST(request: NextRequest) {
       error.code === "P2002"
     ) {
       return NextResponse.json(
-        { message: "동일한 슬러그의 게시판이 이미 존재합니다." },
+        { message: "A board with this slug already exists." },
         { status: 409 },
       );
     }
 
-    return NextResponse.json({ message: "게시판 생성에 실패했습니다." }, { status: 500 });
+    return NextResponse.json({ message: "Failed to create board." }, { status: 500 });
   }
 }

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { hasAdminSession } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminControlPanel } from "./_components/admin-control-panel";
-import { AdminLoginForm } from "./_components/admin-login-form";
 
 export const metadata: Metadata = {
   title: "관리자 패널",
@@ -12,13 +13,17 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  const authorized = await hasAdminSession();
+  const session = await getServerSession(authOptions);
 
-  if (!authorized) {
-    return <AdminLoginForm />;
+  if (!session?.user?.id) {
+    redirect("/auth/sign-in?callbackUrl=/admin");
   }
 
-  const [activeBoards, inactiveBoards, activeAssets, trashedAssets] =
+  if (session.user.role !== "ADMIN") {
+    redirect("/lounge");
+  }
+
+  const [activeBoards, inactiveBoards, activeAssets, trashedAssets, landingVideos] =
     await Promise.all([
       prisma.board.findMany({
         where: { isActive: true },
@@ -30,6 +35,7 @@ export default async function AdminPage() {
           description: true,
           order: true,
           isActive: true,
+          isAdminWriteOnly: true,
           _count: {
             select: { posts: true },
           },
@@ -45,6 +51,7 @@ export default async function AdminPage() {
           description: true,
           order: true,
           isActive: true,
+          isAdminWriteOnly: true,
           _count: {
             select: { posts: true },
           },
@@ -82,6 +89,18 @@ export default async function AdminPage() {
           updatedAt: true,
         },
       }),
+      prisma.landingVideo.findMany({
+        orderBy: [{ order: "asc" }, { id: "asc" }],
+        select: {
+          id: true,
+          title: true,
+          youtubeId: true,
+          order: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
     ]);
 
   return (
@@ -90,6 +109,7 @@ export default async function AdminPage() {
       initialInactiveBoards={inactiveBoards}
       initialActiveAssets={activeAssets}
       initialTrashedAssets={trashedAssets}
+      initialLandingVideos={landingVideos}
     />
   );
 }

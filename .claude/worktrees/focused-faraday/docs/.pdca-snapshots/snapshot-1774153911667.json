@@ -1,0 +1,433 @@
+{
+  "timestamp": "2026-03-22T04:31:51.664Z",
+  "reason": "compaction",
+  "status": {
+    "version": "2.0",
+    "lastUpdated": "2026-03-22T04:31:51.296Z",
+    "activeFeatures": [
+      "(admin)",
+      "_components",
+      "SNR_homepage",
+      "posts",
+      "[id]",
+      "lounge",
+      "boards",
+      "register",
+      "assets"
+    ],
+    "primaryFeature": "(admin)",
+    "features": {
+      "(admin)": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-20T01:10:29.379Z",
+          "lastUpdated": "2026-03-20T01:10:29.379Z"
+        },
+        "lastFile": "/c/Users/kiana/Desktop/DK/SNR_homepage/src/app/(admin)/layout.tsx"
+      },
+      "_components": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-20T01:10:54.208Z",
+          "lastUpdated": "2026-03-22T04:27:52.742Z"
+        },
+        "lastFile": "C:\\Users\\kiana\\Desktop\\DK\\SNR_homepage\\src\\app\\(admin)\\admin\\_components\\asset-manager.tsx"
+      },
+      "SNR_homepage": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-22T02:57:34.074Z",
+          "lastUpdated": "2026-03-22T04:31:51.296Z"
+        },
+        "lastFile": "C:\\Users\\kiana\\Desktop\\DK\\SNR_homepage\\src\\app\\layout.tsx"
+      },
+      "posts": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-22T04:14:55.216Z",
+          "lastUpdated": "2026-03-22T04:14:55.216Z"
+        },
+        "lastFile": "C:\\Users\\kiana\\Desktop\\DK\\SNR_homepage\\src\\app\\api\\admin\\posts\\route.ts"
+      },
+      "[id]": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-22T04:14:58.602Z",
+          "lastUpdated": "2026-03-22T04:27:25.283Z"
+        },
+        "lastFile": "C:\\Users\\kiana\\Desktop\\DK\\SNR_homepage\\src\\app\\api\\admin\\boards\\[id]\\route.ts"
+      },
+      "lounge": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-22T04:17:20.708Z",
+          "lastUpdated": "2026-03-22T04:17:20.708Z"
+        },
+        "lastFile": "C:\\Users\\kiana\\Desktop\\DK\\SNR_homepage\\src\\app\\(lounge)\\lounge\\page.tsx"
+      },
+      "boards": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-22T04:27:20.686Z",
+          "lastUpdated": "2026-03-22T04:27:20.686Z"
+        },
+        "lastFile": "C:\\Users\\kiana\\Desktop\\DK\\SNR_homepage\\src\\app\\api\\admin\\boards\\route.ts"
+      },
+      "register": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-22T04:27:28.572Z",
+          "lastUpdated": "2026-03-22T04:27:28.572Z"
+        },
+        "lastFile": "C:\\Users\\kiana\\Desktop\\DK\\SNR_homepage\\src\\app\\api\\auth\\register\\route.ts"
+      },
+      "assets": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-22T04:27:55.958Z",
+          "lastUpdated": "2026-03-22T04:27:55.958Z"
+        },
+        "lastFile": "C:\\Users\\kiana\\Desktop\\DK\\SNR_homepage\\src\\app\\api\\admin\\assets\\route.ts"
+      }
+    },
+    "pipeline": {
+      "currentPhase": 1,
+      "level": "Dynamic",
+      "phaseHistory": []
+    },
+    "session": {
+      "startedAt": "2026-03-20T01:07:57.538Z",
+      "onboardingCompleted": false,
+      "lastActivity": "2026-03-22T04:31:51.296Z"
+    },
+    "history": [
+      {
+        "timestamp": "2026-03-20T01:10:29.379Z",
+        "feature": "(admin)",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:10:54.208Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:11:12.153Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:11:14.911Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:17:14.611Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:17:24.245Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:22:10.137Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:22:42.059Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:22:52.852Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:23:01.138Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:25:52.394Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:34:37.727Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:34:45.267Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:34:57.718Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:35:08.058Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:35:15.907Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:35:52.534Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:41:17.345Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:41:47.910Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-20T01:41:55.408Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T02:57:34.074Z",
+        "feature": "SNR_homepage",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T02:57:44.549Z",
+        "feature": "SNR_homepage",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T02:57:51.787Z",
+        "feature": "SNR_homepage",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T03:24:16.651Z",
+        "feature": "SNR_homepage",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T03:24:20.056Z",
+        "feature": "SNR_homepage",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T03:24:26.354Z",
+        "feature": "SNR_homepage",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T03:24:32.763Z",
+        "feature": "SNR_homepage",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:14:55.216Z",
+        "feature": "posts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:14:58.602Z",
+        "feature": "[id]",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:15:04.783Z",
+        "feature": "[id]",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:15:09.366Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:15:36.291Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:15:48.440Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:15:58.591Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:16:03.887Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:16:10.657Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:16:24.981Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:17:20.708Z",
+        "feature": "lounge",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:25:18.719Z",
+        "feature": "SNR_homepage",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:27:20.687Z",
+        "feature": "boards",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:27:25.283Z",
+        "feature": "[id]",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:27:28.572Z",
+        "feature": "register",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:27:45.590Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:27:52.742Z",
+        "feature": "_components",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:27:55.958Z",
+        "feature": "assets",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:27:58.904Z",
+        "feature": "SNR_homepage",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-22T04:31:51.296Z",
+        "feature": "SNR_homepage",
+        "phase": "do",
+        "action": "updated"
+      }
+    ]
+  }
+}
