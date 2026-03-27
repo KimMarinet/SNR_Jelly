@@ -33,6 +33,16 @@ export function SlashTransition({ to = "/lounge" }: { to?: string }) {
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [splitPolys, setSplitPolys] = useState<{ tl: string; br: string } | null>(null);
+  const [atHero, setAtHero] = useState(true);
+
+  // 히어로 섹션 범위 안에서만 힌트 표시
+  useEffect(() => {
+    const onScroll = () => {
+      setAtHero(window.scrollY < window.innerHeight * 0.75);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // ── 캔버스 크기 유지 ──────────────────────────────────
   useEffect(() => {
@@ -251,10 +261,10 @@ export function SlashTransition({ to = "/lounge" }: { to?: string }) {
         </>
       )}
 
-      {/* 대기 상태 힌트 UI */}
-      {phase === "idle" && (
+      {/* 대기 상태 힌트 UI — 히어로 섹션 안에서만 표시 */}
+      {phase === "idle" && atHero && (
         <div
-          className="pointer-events-none fixed bottom-24 left-1/2 z-[40] -translate-x-1/2 select-none"
+          className="pointer-events-none fixed left-1/2 top-1/2 z-[40] -translate-x-1/2 -translate-y-1/2 select-none transition-opacity duration-500"
           aria-hidden
         >
           <div className="flex flex-col items-center gap-2 opacity-60">

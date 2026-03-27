@@ -8,6 +8,7 @@ const createPostSchema = z.object({
   boardId: z.number().int().positive(),
   title: z.string().trim().min(2).max(120),
   content: z.string().trim(),
+  isPinned: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
       title: parsed.data.title,
       content: parsed.data.content,
       isPublished: true,
+      isPinned: user.role === "ADMIN" ? (parsed.data.isPinned ?? false) : false,
     },
     select: {
       id: true,

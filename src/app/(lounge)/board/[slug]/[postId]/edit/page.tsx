@@ -48,6 +48,7 @@ export default async function BoardPostEditPage({ params }: BoardPostEditPagePro
       authorId: true,
       title: true,
       content: true,
+      isPinned: true,
     },
   });
   if (!post) {
@@ -75,6 +76,8 @@ export default async function BoardPostEditPage({ params }: BoardPostEditPagePro
           postId={post.id}
           initialTitle={post.title}
           initialContent={post.content}
+          isAdmin={isAdmin}
+          initialIsPinned={post.isPinned}
         />
       </section>
     </div>

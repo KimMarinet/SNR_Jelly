@@ -37,7 +37,7 @@ export default async function BoardPostCreatePage({ params }: BoardPostCreatePag
       </header>
 
       <section className="rounded-2xl border border-white/15 bg-black/30 p-6">
-        <PostEditorForm boardId={board.id} boardSlug={board.slug} mode="create" />
+        <PostEditorForm boardId={board.id} boardSlug={board.slug} mode="create" isAdmin={isAdmin} />
       </section>
     </div>
   );
