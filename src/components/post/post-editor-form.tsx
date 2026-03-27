@@ -17,6 +17,8 @@ type PostEditorFormProps = {
   postId?: number;
   initialTitle?: string;
   initialContent?: string;
+  isAdmin?: boolean;
+  initialIsPinned?: boolean;
 };
 
 export function PostEditorForm({
@@ -26,10 +28,13 @@ export function PostEditorForm({
   postId,
   initialTitle = "",
   initialContent = "",
+  isAdmin = false,
+  initialIsPinned = false,
 }: PostEditorFormProps) {
   const router = useRouter();
   const editorRef = useRef<ToastEditorType>(null);
   const [title, setTitle] = useState(initialTitle);
+  const [isPinned, setIsPinned] = useState(initialIsPinned);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const editorInitialValue = mode === "create" ? " " : initialContent || " ";
@@ -86,6 +91,7 @@ export function PostEditorForm({
         boardId,
         title,
         content,
+        ...(isAdmin && mode === "create" ? { isPinned } : {}),
       };
 
       const response = await fetch(
@@ -99,6 +105,7 @@ export function PostEditorForm({
               : JSON.stringify({
                   title: payload.title,
                   content: payload.content,
+                  ...(isAdmin ? { isPinned } : {}),
                 }),
         },
       );
@@ -177,6 +184,24 @@ export function PostEditorForm({
           }}
         />
       </div>
+
+      {/* 관리자 전용 — 필수 공지 등록 / 고정 여부 */}
+      {isAdmin && (
+        <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 transition hover:bg-amber-400/10">
+          <input
+            type="checkbox"
+            checked={isPinned}
+            onChange={(e) => setIsPinned(e.target.checked)}
+            className="h-4 w-4 accent-amber-400"
+          />
+          <div>
+            <span className="text-sm font-semibold text-amber-300">
+              {mode === "create" ? "필수 공지로 등록" : "상단 고정 (필수 공지)"}
+            </span>
+            <p className="text-xs text-zinc-400">체크 시 게시판 상단에 고정되어 모든 사용자에게 우선 표시됩니다.</p>
+          </div>
+        </label>
+      )}
 
       {error ? (
         <p className="rounded-lg border border-rose-300/30 bg-rose-300/10 px-3 py-2 text-sm text-rose-100">

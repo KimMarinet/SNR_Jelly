@@ -7,6 +7,7 @@ import { getCurrentUserAuth } from "@/lib/session";
 const updatePostSchema = z.object({
   title: z.string().trim().min(2).max(120),
   content: z.string().trim(),
+  isPinned: z.boolean().optional(),
 });
 
 function parseId(rawId: string): number | null {
@@ -61,6 +62,9 @@ export async function PATCH(
       title: parsed.data.title,
       content: parsed.data.content,
       isPublished: true,
+      ...(user.role === "ADMIN" && parsed.data.isPinned !== undefined
+        ? { isPinned: parsed.data.isPinned }
+        : {}),
     },
     select: { id: true, title: true, isPublished: true, updatedAt: true },
   });
