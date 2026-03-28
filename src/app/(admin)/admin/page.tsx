@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { characterSelect, toAdminCharacter } from "@/lib/character-admin-server";
 import { getAdminHeroBackgroundUrl } from "@/lib/admin-preferences";
 import { prisma } from "@/lib/prisma";
 import { attachSystemProtection, ensureSystemBoards } from "@/lib/system-boards";
@@ -27,7 +28,7 @@ export default async function AdminPage() {
 
   await ensureSystemBoards();
 
-  const [activeBoardsRaw, inactiveBoardsRaw, activeAssets, trashedAssets, landingVideos, adminHeroBackgroundUrl] =
+  const [activeBoardsRaw, inactiveBoardsRaw, charactersRaw, landingVideos, adminHeroBackgroundUrl] =
     await Promise.all([
       prisma.board.findMany({
         where: { isActive: true },
@@ -61,37 +62,9 @@ export default async function AdminPage() {
           },
         },
       }),
-      prisma.asset.findMany({
-        where: { deletedAt: null },
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          category: true,
-          originalName: true,
-          storedName: true,
-          mimeType: true,
-          size: true,
-          publicUrl: true,
-          deletedAt: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      }),
-      prisma.asset.findMany({
-        where: { deletedAt: { not: null } },
-        orderBy: { deletedAt: "desc" },
-        select: {
-          id: true,
-          category: true,
-          originalName: true,
-          storedName: true,
-          mimeType: true,
-          size: true,
-          publicUrl: true,
-          deletedAt: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+      prisma.character.findMany({
+        orderBy: [{ name: "asc" }, { id: "asc" }],
+        select: characterSelect,
       }),
       prisma.landingVideo.findMany({
         orderBy: [{ order: "asc" }, { id: "asc" }],
@@ -111,13 +84,13 @@ export default async function AdminPage() {
     attachSystemProtection(activeBoardsRaw),
     attachSystemProtection(inactiveBoardsRaw),
   ]);
+  const characters = charactersRaw.map(toAdminCharacter);
 
   return (
     <AdminControlPanel
       initialActiveBoards={activeBoards}
       initialInactiveBoards={inactiveBoards}
-      initialActiveAssets={activeAssets}
-      initialTrashedAssets={trashedAssets}
+      initialCharacters={characters}
       initialLandingVideos={landingVideos}
       initialHeroBackgroundUrl={adminHeroBackgroundUrl}
     />

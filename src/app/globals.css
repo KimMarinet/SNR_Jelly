@@ -724,6 +724,94 @@ body {
   background: color-mix(in srgb, var(--hub-danger-bg) 100%, var(--hub-surface) 84%);
 }
 
+.auth-neon-button {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  isolation: isolate;
+  border: 1px solid transparent;
+  transition:
+    transform 180ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease;
+}
+
+.auth-neon-button::before {
+  content: "";
+  position: absolute;
+  border-radius: inherit;
+  inset: -45% auto -45% -30%;
+  width: 34%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--hub-accent) 28%, transparent) 16%,
+    color-mix(in srgb, #f8cc47 95%, white 5%) 50%,
+    color-mix(in srgb, var(--hub-accent) 34%, transparent) 84%,
+    transparent 100%
+  );
+  filter: blur(8px);
+  opacity: 0;
+  transform: translateX(-220%) skewX(-24deg);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.auth-neon-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid color-mix(in srgb, var(--hub-accent) 58%, transparent);
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 18px color-mix(in srgb, var(--hub-accent) 16%, transparent),
+    0 0 14px color-mix(in srgb, var(--hub-accent) 14%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    box-shadow 220ms ease;
+  z-index: 1;
+}
+
+.auth-neon-button__label {
+  position: relative;
+  z-index: 2;
+  transition:
+    color 180ms ease,
+    text-shadow 220ms ease,
+    transform 180ms ease;
+}
+
+.auth-neon-button:hover {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--hub-accent) 12%, transparent),
+    0 12px 28px -18px color-mix(in srgb, var(--hub-accent) 60%, transparent);
+  transform: translateY(-1px);
+}
+
+.auth-neon-button:hover::before {
+  opacity: 1;
+  animation: auth-neon-scan 1.05s ease forwards;
+}
+
+.auth-neon-button:hover::after {
+  opacity: 1;
+}
+
+.auth-neon-button:hover .auth-neon-button__label {
+  color: #f8ffd6;
+  text-shadow:
+    0 0 8px color-mix(in srgb, var(--hub-accent) 70%, white 30%),
+    0 0 18px color-mix(in srgb, var(--hub-accent) 58%, transparent),
+    0 0 26px color-mix(in srgb, #f8cc47 44%, transparent);
+  transform: translateY(-0.5px);
+}
+
+.auth-neon-button:disabled {
+  cursor: not-allowed;
+}
+
 @media (min-width: 1024px) {
   .admin-dashboard {
     grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
@@ -932,6 +1020,27 @@ main {
   }
 }
 
+@keyframes neon-aura {
+  0%, 100% {
+    box-shadow:
+      0 0 4px color-mix(in srgb, var(--hub-accent) 90%, transparent),
+      0 0 10px color-mix(in srgb, var(--hub-accent) 50%, transparent),
+      0 0 20px color-mix(in srgb, var(--hub-accent) 25%, transparent);
+    text-shadow:
+      0 0 6px color-mix(in srgb, var(--hub-accent) 70%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 6px var(--hub-accent),
+      0 0 16px color-mix(in srgb, var(--hub-accent) 75%, transparent),
+      0 0 32px color-mix(in srgb, var(--hub-accent) 40%, transparent),
+      0 0 54px color-mix(in srgb, var(--hub-accent) 18%, transparent);
+    text-shadow:
+      0 0 8px var(--hub-accent),
+      0 0 18px color-mix(in srgb, var(--hub-accent) 55%, transparent);
+  }
+}
+
 /* ── 검기 트랜지션 분할 패널 ── */
 @keyframes slash-split-tl {
   from {
@@ -986,5 +1095,29 @@ main {
   .profile-trigger:active {
     transition: none;
     transform: none;
+  }
+
+  .auth-neon-button,
+  .auth-neon-button::before,
+  .auth-neon-button::after,
+  .auth-neon-button__label,
+  .auth-neon-button:hover {
+    transition: none;
+    transform: none;
+  }
+
+  .auth-neon-button:hover::before {
+    animation: none;
+    opacity: 0.5;
+    transform: translateX(40%) skewX(-24deg);
+  }
+}
+
+@keyframes auth-neon-scan {
+  from {
+    transform: translateX(-220%) skewX(-24deg);
+  }
+  to {
+    transform: translateX(420%) skewX(-24deg);
   }
 }

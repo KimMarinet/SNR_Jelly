@@ -1,4 +1,9 @@
-import type { AssetCategory } from "@/generated/prisma";
+import type {
+  AssetCategory,
+  CharacterAttackType,
+  CharacterRole,
+} from "@/generated/prisma";
+import type { CharacterTranscendenceEntry } from "@/lib/character-admin";
 
 export type AdminBoard = {
   id: number;
@@ -52,4 +57,36 @@ export type AdminLandingVideo = {
 
 export type AdminHeroBackgroundPreference = {
   backgroundImageUrl: string | null;
+};
+
+export type AdminCharacter = {
+  id: number;
+  name: string;
+  portraitUrl: string;
+  skillOneName: string;
+  skillOneImageUrl: string;
+  skillTwoName: string;
+  skillTwoImageUrl: string;
+  skillDescription: string;
+  skillTwoDescription: string;
+  passiveName: string;
+  passiveImageUrl: string;
+  passiveDescription: string;
+  role: CharacterRole;
+  roleSymbolUrl: string;
+  attackType: CharacterAttackType;
+  attackPower: number;
+  defense: number;
+  health: number;
+  speed: number;
+  criticalRate: number;
+  criticalDamage: number;
+  weakPointRate: number;
+  blockRate: number;
+  damageReduction: number;
+  effectAccuracy: number;
+  effectResistance: number;
+  transcendence: CharacterTranscendenceEntry[];
+  createdAt: string | Date;
+  updatedAt: string | Date;
 };

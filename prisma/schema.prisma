@@ -20,6 +20,19 @@ enum UserRole {
   ADMIN
 }
 
+enum CharacterRole {
+  ATTACKER
+  MAGIC
+  DEFENDER
+  SUPPORT
+  UNIVERSAL
+}
+
+enum CharacterAttackType {
+  PHYSICAL
+  MAGIC
+}
+
 model User {
   id           Int        @id @default(autoincrement())
   email        String     @unique
@@ -139,6 +152,60 @@ model Asset {
   updatedAt    DateTime      @updatedAt
 
   @@index([category, deletedAt])
+}
+
+model Character {
+  id                     Int                 @id @default(autoincrement())
+  name                   String              @unique
+  portraitOriginalName   String
+  portraitStoredName     String              @unique
+  portraitMimeType       String
+  portraitSize           Int
+  portraitFilePath       String
+  portraitUrl            String
+  skillOneName           String
+  skillOneImageOriginalName String
+  skillOneImageStoredName String             @unique
+  skillOneImageMimeType  String
+  skillOneImageSize      Int
+  skillOneImageFilePath  String
+  skillOneImageUrl       String
+  skillTwoName           String
+  skillTwoImageOriginalName String
+  skillTwoImageStoredName String             @unique
+  skillTwoImageMimeType  String
+  skillTwoImageSize      Int
+  skillTwoImageFilePath  String
+  skillTwoImageUrl       String
+  skillDescription       String?             @db.Text
+  skillTwoDescription    String?             @db.Text
+  passiveName            String
+  passiveImageOriginalName String
+  passiveImageStoredName String              @unique
+  passiveImageMimeType   String
+  passiveImageSize       Int
+  passiveImageFilePath   String
+  passiveImageUrl        String
+  passiveDescription     String?             @db.Text
+  role                   CharacterRole
+  roleSymbolUrl          String
+  attackType             CharacterAttackType
+  attackPower            Int
+  defense                Int
+  health                 Int
+  speed                  Int
+  criticalRate           Int
+  criticalDamage         Int
+  weakPointRate          Int
+  blockRate              Int
+  damageReduction        Int
+  effectAccuracy         Int
+  effectResistance       Int
+  transcendence          Json
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+
+  @@index([role, createdAt])
 }
 
 model LandingVideo {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getServerSession } from "next-auth";
+import { HeaderNav } from "@/components/layout/header-nav";
 import { ProfileMenu } from "@/components/layout/profile-menu";
 import { authOptions } from "@/lib/auth";
 
@@ -62,28 +63,7 @@ export async function Header({ variant = "default" }: HeaderProps = {}) {
           {isHub ? "SNR Jelly" : "세븐나이츠 리버스 라운지"}
         </Link>
 
-        <nav className={isHub ? "hidden items-center gap-6 md:flex" : "theme-chip hidden items-center gap-2 rounded-full border p-1 md:flex"}>
-          {menus.map((menu, index) => (
-            <Link
-              key={`${menu.label}-${index}`}
-              href={menu.href}
-              className={
-                isHub
-                  ? "border-b-2 pb-1 text-sm font-bold uppercase tracking-wide transition"
-                  : "rounded-full px-4 py-2 text-sm font-medium transition hover:opacity-90"
-              }
-              style={
-                isHub
-                  ? index === 0
-                    ? { color: "var(--hub-accent)", borderColor: "var(--hub-accent)" }
-                    : { color: "color-mix(in srgb, var(--hub-text) 70%, transparent)", borderColor: "transparent" }
-                  : { color: "var(--strong-text)" }
-              }
-            >
-              {menu.label}
-            </Link>
-          ))}
-        </nav>
+        <HeaderNav menus={menus} variant={variant} />
 
         <div className="flex items-center gap-2 text-sm">
           <ProfileMenu

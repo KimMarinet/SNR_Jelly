@@ -168,7 +168,7 @@ export function AssetManager({
               className="mt-2 text-2xl font-black uppercase tracking-tight [font-family:var(--font-space-grotesk),sans-serif]"
               style={{ color: "var(--hub-text)" }}
             >
-              파일 관리
+              캐릭터 관리
             </h2>
             <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--hub-muted)" }}>
               공용 이미지와 자료 파일을 업로드하고, 카테고리별로 빠르게 분류하며, 삭제 대기 파일까지

@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { Footer } from "@/components/layout/footer";
+import { ThemeToggleButton } from "@/components/theme/theme-toggle-button";
 import { authOptions } from "@/lib/auth";
 
 export default async function AdminLayout({
@@ -30,24 +31,27 @@ export default async function AdminLayout({
             </p>
           </div>
 
-          <div
-            className="inline-flex max-w-full items-center gap-3 rounded-full border px-3 py-1.5 text-sm"
-            style={{
-              borderColor: "var(--hub-border)",
-              backgroundColor: "var(--hub-surface-alt)",
-              color: "var(--hub-text)",
-            }}
-          >
-            <span
-              className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]"
+          <div className="flex items-center gap-2">
+            <div
+              className="inline-flex max-w-full items-center gap-3 rounded-full border px-3 py-1.5 text-sm"
               style={{
-                backgroundColor: "var(--hub-accent-soft)",
-                color: "var(--hub-accent)",
+                borderColor: "var(--hub-border)",
+                backgroundColor: "var(--hub-surface-alt)",
+                color: "var(--hub-text)",
               }}
             >
-              ADMIN
-            </span>
-            <span className="truncate">{accountLabel}</span>
+              <span
+                className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]"
+                style={{
+                  backgroundColor: "var(--hub-accent-soft)",
+                  color: "var(--hub-accent)",
+                }}
+              >
+                ADMIN
+              </span>
+              <span className="truncate">{accountLabel}</span>
+            </div>
+            <ThemeToggleButton variant="hub" layout="compact" />
           </div>
         </div>
       </header>

@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 
 type ThemeMode = "light" | "dark";
 type ThemeToggleButtonProps = {
   variant?: "default" | "hub";
+  layout?: "default" | "compact";
 };
 
 const STORAGE_KEY = "snr-theme-mode";
+const THEME_CHANGE_EVENT = "snr-theme-change";
 
 function readThemeMode(): ThemeMode {
   if (typeof window === "undefined") {
@@ -34,6 +36,31 @@ function applyThemeMode(mode: ThemeMode) {
 
   document.documentElement.setAttribute("data-theme", mode);
   window.localStorage.setItem(STORAGE_KEY, mode);
+  window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
+}
+
+function subscribe(callback: () => void) {
+  if (typeof window === "undefined") {
+    return () => undefined;
+  }
+
+  const media = window.matchMedia("(prefers-color-scheme: dark)");
+
+  function handleStorage(event: StorageEvent) {
+    if (event.key === null || event.key === STORAGE_KEY) {
+      callback();
+    }
+  }
+
+  window.addEventListener("storage", handleStorage);
+  window.addEventListener(THEME_CHANGE_EVENT, callback);
+  media.addEventListener("change", callback);
+
+  return () => {
+    window.removeEventListener("storage", handleStorage);
+    window.removeEventListener(THEME_CHANGE_EVENT, callback);
+    media.removeEventListener("change", callback);
+  };
 }
 
 function SunIcon() {
@@ -60,15 +87,54 @@ function MoonIcon() {
   );
 }
 
-export function ThemeToggleButton({ variant = "default" }: ThemeToggleButtonProps) {
-  const [mode, setMode] = useState<ThemeMode>(readThemeMode);
+export function ThemeToggleButton({
+  variant = "default",
+  layout = "default",
+}: ThemeToggleButtonProps) {
+  const mode = useSyncExternalStore(subscribe, readThemeMode, () => "dark");
   const isHub = variant === "hub";
   const isDark = mode === "dark";
 
   function handleToggle() {
     const nextMode: ThemeMode = isDark ? "light" : "dark";
-    setMode(nextMode);
     applyThemeMode(nextMode);
+  }
+
+  if (layout === "compact") {
+    return (
+      <button
+        type="button"
+        onClick={handleToggle}
+        aria-label={isDark ? "라이트 모드로 전환" : "다크 모드로 전환"}
+        aria-pressed={isDark}
+        title={isDark ? "라이트 모드로 전환" : "다크 모드로 전환"}
+        className="inline-flex h-10 w-10 items-center justify-center rounded-full border transition duration-200 hover:-translate-y-0.5"
+        style={{
+          borderColor: isHub
+            ? "color-mix(in srgb, var(--hub-outline) 34%, transparent)"
+            : "color-mix(in srgb, var(--chip-border) 92%, transparent)",
+          background: isHub
+            ? isDark
+              ? "linear-gradient(135deg, color-mix(in srgb, var(--hub-accent-soft) 75%, transparent) 0%, color-mix(in srgb, var(--hub-surface-alt) 98%, transparent) 100%)"
+              : "linear-gradient(135deg, color-mix(in srgb, var(--hub-surface-alt) 92%, transparent) 0%, color-mix(in srgb, var(--hub-surface) 98%, transparent) 100%)"
+            : isDark
+              ? "linear-gradient(135deg, color-mix(in srgb, var(--accent) 20%, white 80%) 0%, color-mix(in srgb, var(--accent-strong) 34%, white 66%) 100%)"
+              : "linear-gradient(135deg, color-mix(in srgb, var(--surface) 96%, white 4%) 0%, color-mix(in srgb, var(--surface-elevated) 92%, white 8%) 100%)",
+          color: isHub
+            ? isDark
+              ? "var(--hub-accent-button-text)"
+              : "var(--hub-text)"
+            : isDark
+              ? "#ffffff"
+              : "var(--foreground)",
+          boxShadow: isHub
+            ? "0 12px 28px -20px color-mix(in srgb, var(--hub-bg) 70%, transparent)"
+            : "0 12px 24px -20px rgba(15, 23, 42, 0.28)",
+        }}
+      >
+        {isDark ? <MoonIcon /> : <SunIcon />}
+      </button>
+    );
   }
 
   return (

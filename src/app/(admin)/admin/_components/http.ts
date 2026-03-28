@@ -1,4 +1,4 @@
-export async function readJson<T>(response: Response): Promise<T> {
+﻿export async function readJson<T>(response: Response): Promise<T> {
   const data = (await response.json().catch(() => ({}))) as T & {
     message?: string;
   };

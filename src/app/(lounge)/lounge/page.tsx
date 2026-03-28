@@ -1,5 +1,6 @@
 ﻿import Link from "next/link";
 import type { Metadata } from "next";
+import { CombinationSection } from "@/components/lounge/combination-section";
 import { prisma } from "@/lib/prisma";
 import { ensureSystemBoards } from "@/lib/system-boards";
 
@@ -299,7 +300,7 @@ export default async function LoungeHomePage() {
             className="border p-10 text-center text-sm"
             style={{ borderColor: "var(--hub-border)", backgroundColor: "var(--hub-surface)", color: "var(--hub-muted)" }}
           >
-            ?쒖꽦?붾맂 寃뚯떆?먯씠 ?놁뒿?덈떎.
+            아직 등록된 게시글이 없습니다.
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-[1px] md:grid-cols-2 xl:grid-cols-3" style={{ backgroundColor: "var(--hub-border)" }}>
@@ -434,7 +435,7 @@ export default async function LoungeHomePage() {
               </>
             ) : (
               <p className="text-sm" style={{ color: "var(--hub-muted)" }}>
-                ?쒖떆???몃젋??寃뚯떆湲???놁뒿?덈떎.
+                실시간 트렌드 게시글이 없습니다.
               </p>
             )}
           </div>
@@ -446,12 +447,12 @@ export default async function LoungeHomePage() {
               className="text-lg font-bold uppercase tracking-tight [font-family:var(--font-space-grotesk),sans-serif]"
               style={{ color: "var(--hub-accent)" }}
             >
-              Live Activity
+              실시간 활동
             </h3>
             <div className="mt-4 space-y-3">
               {activityFeed.length === 0 ? (
                 <p className="text-sm" style={{ color: "var(--hub-muted)" }}>
-                  ?쒕룞 濡쒓렇媛 ?놁뒿?덈떎.
+                  활동 로그가 없습니다.
                 </p>
               ) : (
                 activityFeed.map((post, index) => (
@@ -486,6 +487,8 @@ export default async function LoungeHomePage() {
           </div>
         </aside>
       </section>
+
+      <CombinationSection />
 
       <section>
         <HubSectionHeader title="Resource Nexus" />

@@ -29,7 +29,7 @@ export function SignUpForm() {
         throw new Error(data.message ?? "회원가입에 실패했습니다.");
       }
 
-      setMessage("가입이 완료되었습니다. 로그인 중입니다...");
+      setMessage("가입이 완료되었습니다. 로그인 처리 중입니다...");
       const signInResult = await signIn("credentials", {
         email,
         password,
@@ -51,42 +51,72 @@ export function SignUpForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="mt-5 space-y-3">
-      <input
-        type="email"
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-        placeholder="이메일"
-        required
-        className="w-full rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none"
-      />
-      <input
-        type="text"
-        value={nickname}
-        onChange={(event) => setNickname(event.target.value)}
-        placeholder="닉네임"
-        minLength={2}
-        maxLength={24}
-        required
-        className="w-full rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none"
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(event) => setPassword(event.target.value)}
-        placeholder="비밀번호 (8자 이상)"
-        minLength={8}
-        required
-        className="w-full rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none"
-      />
+    <form onSubmit={onSubmit} className="space-y-5">
+      <div className="space-y-2">
+        <label
+          htmlFor="sign-up-email"
+          className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--hub-muted)] [font-family:var(--font-space-grotesk),sans-serif]"
+        >
+          Email
+        </label>
+        <input
+          id="sign-up-email"
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="사용할 이메일을 입력해 주세요"
+          required
+          className="w-full rounded-2xl border border-[var(--hub-border)] bg-[color-mix(in_srgb,var(--hub-bg)_42%,var(--hub-surface)_58%)] px-4 py-3 text-sm text-[var(--hub-text)] outline-none transition placeholder:text-[color-mix(in_srgb,var(--hub-muted)_72%,transparent)] focus:border-[var(--hub-outline)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--hub-accent)_16%,transparent)]"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label
+          htmlFor="sign-up-nickname"
+          className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--hub-muted)] [font-family:var(--font-space-grotesk),sans-serif]"
+        >
+          Nickname
+        </label>
+        <input
+          id="sign-up-nickname"
+          type="text"
+          value={nickname}
+          onChange={(event) => setNickname(event.target.value)}
+          placeholder="커뮤니티에서 사용할 닉네임"
+          minLength={2}
+          maxLength={24}
+          required
+          className="w-full rounded-2xl border border-[var(--hub-border)] bg-[color-mix(in_srgb,var(--hub-bg)_42%,var(--hub-surface)_58%)] px-4 py-3 text-sm text-[var(--hub-text)] outline-none transition placeholder:text-[color-mix(in_srgb,var(--hub-muted)_72%,transparent)] focus:border-[var(--hub-outline)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--hub-accent)_16%,transparent)]"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label
+          htmlFor="sign-up-password"
+          className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--hub-muted)] [font-family:var(--font-space-grotesk),sans-serif]"
+        >
+          Password
+        </label>
+        <input
+          id="sign-up-password"
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder="8자 이상 비밀번호"
+          minLength={8}
+          required
+          className="w-full rounded-2xl border border-[var(--hub-border)] bg-[color-mix(in_srgb,var(--hub-bg)_42%,var(--hub-surface)_58%)] px-4 py-3 text-sm text-[var(--hub-text)] outline-none transition placeholder:text-[color-mix(in_srgb,var(--hub-muted)_72%,transparent)] focus:border-[var(--hub-outline)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--hub-accent)_16%,transparent)]"
+        />
+      </div>
 
       {message ? (
-        <p className="rounded-lg border border-emerald-300/35 bg-emerald-300/10 px-3 py-2 text-sm text-emerald-100">
+        <p className="rounded-2xl border border-[var(--hub-outline)] bg-[var(--hub-accent-soft)] px-4 py-3 text-sm text-[var(--hub-text)]">
           {message}
         </p>
       ) : null}
+
       {error ? (
-        <p className="rounded-lg border border-rose-300/30 bg-rose-300/10 px-3 py-2 text-sm text-rose-100">
+        <p className="rounded-2xl border border-[var(--hub-danger-border)] bg-[var(--hub-danger-bg)] px-4 py-3 text-sm text-[var(--hub-danger-text)]">
           {error}
         </p>
       ) : null}
@@ -94,9 +124,9 @@ export function SignUpForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-xl bg-gradient-to-r from-emerald-300 to-cyan-300 px-4 py-2 text-sm font-semibold text-zinc-950 disabled:cursor-not-allowed disabled:opacity-70"
+        className="auth-neon-button w-full rounded-2xl bg-[var(--hub-accent-button-bg)] px-4 py-3 text-sm font-bold tracking-[0.08em] text-[#243200] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {submitting ? "가입 중..." : "회원가입"}
+        <span className="auth-neon-button__label">{submitting ? "가입 중..." : "회원가입"}</span>
       </button>
     </form>
   );

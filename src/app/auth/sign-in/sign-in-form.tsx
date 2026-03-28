@@ -35,34 +35,55 @@ export function SignInForm({ callbackUrl }: SignInFormProps) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="mt-5 space-y-3">
-      <input
-        type="email"
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-        placeholder="이메일"
-        required
-        className="w-full rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none"
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(event) => setPassword(event.target.value)}
-        placeholder="비밀번호"
-        required
-        className="w-full rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none"
-      />
+    <form onSubmit={onSubmit} className="space-y-5">
+      <div className="space-y-2">
+        <label
+          htmlFor="sign-in-email"
+          className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--hub-muted)] [font-family:var(--font-space-grotesk),sans-serif]"
+        >
+          Email
+        </label>
+        <input
+          id="sign-in-email"
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="이메일을 입력해 주세요"
+          required
+          className="w-full rounded-2xl border border-[var(--hub-border)] bg-[color-mix(in_srgb,var(--hub-bg)_42%,var(--hub-surface)_58%)] px-4 py-3 text-sm text-[var(--hub-text)] outline-none transition placeholder:text-[color-mix(in_srgb,var(--hub-muted)_72%,transparent)] focus:border-[var(--hub-outline)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--hub-accent)_16%,transparent)]"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label
+          htmlFor="sign-in-password"
+          className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--hub-muted)] [font-family:var(--font-space-grotesk),sans-serif]"
+        >
+          Password
+        </label>
+        <input
+          id="sign-in-password"
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder="비밀번호를 입력해 주세요"
+          required
+          className="w-full rounded-2xl border border-[var(--hub-border)] bg-[color-mix(in_srgb,var(--hub-bg)_42%,var(--hub-surface)_58%)] px-4 py-3 text-sm text-[var(--hub-text)] outline-none transition placeholder:text-[color-mix(in_srgb,var(--hub-muted)_72%,transparent)] focus:border-[var(--hub-outline)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--hub-accent)_16%,transparent)]"
+        />
+      </div>
+
       {error ? (
-        <p className="rounded-lg border border-rose-300/30 bg-rose-300/10 px-3 py-2 text-sm text-rose-100">
+        <p className="rounded-2xl border border-[var(--hub-danger-border)] bg-[var(--hub-danger-bg)] px-4 py-3 text-sm text-[var(--hub-danger-text)]">
           {error}
         </p>
       ) : null}
+
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-xl bg-gradient-to-r from-emerald-300 to-cyan-300 px-4 py-2 text-sm font-semibold text-zinc-950 disabled:cursor-not-allowed disabled:opacity-70"
+        className="auth-neon-button w-full rounded-2xl bg-[var(--hub-accent-button-bg)] px-4 py-3 text-sm font-bold tracking-[0.08em] text-[#243200] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {submitting ? "로그인 중..." : "로그인"}
+        <span className="auth-neon-button__label">{submitting ? "로그인 중..." : "로그인"}</span>
       </button>
     </form>
   );
