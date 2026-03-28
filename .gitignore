@@ -48,3 +48,6 @@ next-env.d.ts
 
 # claudecode
 .claude/
+
+# prisma generated (local artifacts)
+/src/generated/prisma/
