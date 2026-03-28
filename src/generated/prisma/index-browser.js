@@ -131,6 +131,15 @@ exports.Prisma.UserScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.AdminPreferenceScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  heroBackgroundStoredName: 'heroBackgroundStoredName',
+  heroBackgroundUrl: 'heroBackgroundUrl',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.BoardScalarFieldEnum = {
   id: 'id',
   slug: 'slug',
@@ -139,6 +148,7 @@ exports.Prisma.BoardScalarFieldEnum = {
   order: 'order',
   isActive: 'isActive',
   isAdminWriteOnly: 'isAdminWriteOnly',
+  isSystemProtected: 'isSystemProtected',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -221,6 +231,11 @@ exports.Prisma.UserOrderByRelevanceFieldEnum = {
   nickname: 'nickname'
 };
 
+exports.Prisma.AdminPreferenceOrderByRelevanceFieldEnum = {
+  heroBackgroundStoredName: 'heroBackgroundStoredName',
+  heroBackgroundUrl: 'heroBackgroundUrl'
+};
+
 exports.Prisma.BoardOrderByRelevanceFieldEnum = {
   slug: 'slug',
   title: 'title',
@@ -261,6 +276,7 @@ exports.AssetCategory = exports.$Enums.AssetCategory = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  AdminPreference: 'AdminPreference',
   Board: 'Board',
   Post: 'Post',
   Comment: 'Comment',

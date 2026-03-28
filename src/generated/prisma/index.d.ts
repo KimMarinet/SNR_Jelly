@@ -19,6 +19,11 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
+ * Model AdminPreference
+ * 
+ */
+export type AdminPreference = $Result.DefaultSelection<Prisma.$AdminPreferencePayload>
+/**
  * Model Board
  * 
  */
@@ -211,6 +216,16 @@ export class PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.adminPreference`: Exposes CRUD operations for the **AdminPreference** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AdminPreferences
+    * const adminPreferences = await prisma.adminPreference.findMany()
+    * ```
+    */
+  get adminPreference(): Prisma.AdminPreferenceDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.board`: Exposes CRUD operations for the **Board** model.
@@ -723,6 +738,7 @@ export namespace Prisma {
 
   export const ModelName: {
     User: 'User',
+    AdminPreference: 'AdminPreference',
     Board: 'Board',
     Post: 'Post',
     Comment: 'Comment',
@@ -748,7 +764,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "board" | "post" | "comment" | "postLike" | "postView" | "asset" | "landingVideo"
+      modelProps: "user" | "adminPreference" | "board" | "post" | "comment" | "postLike" | "postView" | "asset" | "landingVideo"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -815,6 +831,72 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>
             result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      AdminPreference: {
+        payload: Prisma.$AdminPreferencePayload<ExtArgs>
+        fields: Prisma.AdminPreferenceFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AdminPreferenceFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminPreferencePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AdminPreferenceFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminPreferencePayload>
+          }
+          findFirst: {
+            args: Prisma.AdminPreferenceFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminPreferencePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AdminPreferenceFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminPreferencePayload>
+          }
+          findMany: {
+            args: Prisma.AdminPreferenceFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminPreferencePayload>[]
+          }
+          create: {
+            args: Prisma.AdminPreferenceCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminPreferencePayload>
+          }
+          createMany: {
+            args: Prisma.AdminPreferenceCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          delete: {
+            args: Prisma.AdminPreferenceDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminPreferencePayload>
+          }
+          update: {
+            args: Prisma.AdminPreferenceUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminPreferencePayload>
+          }
+          deleteMany: {
+            args: Prisma.AdminPreferenceDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AdminPreferenceUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.AdminPreferenceUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AdminPreferencePayload>
+          }
+          aggregate: {
+            args: Prisma.AdminPreferenceAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAdminPreference>
+          }
+          groupBy: {
+            args: Prisma.AdminPreferenceGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AdminPreferenceGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AdminPreferenceCountArgs<ExtArgs>
+            result: $Utils.Optional<AdminPreferenceCountAggregateOutputType> | number
           }
         }
       }
@@ -1377,6 +1459,7 @@ export namespace Prisma {
   }
   export type GlobalOmitConfig = {
     user?: UserOmit
+    adminPreference?: AdminPreferenceOmit
     board?: BoardOmit
     post?: PostOmit
     comment?: CommentOmit
@@ -1815,6 +1898,7 @@ export namespace Prisma {
     role?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    adminPreference?: boolean | User$adminPreferenceArgs<ExtArgs>
     posts?: boolean | User$postsArgs<ExtArgs>
     comments?: boolean | User$commentsArgs<ExtArgs>
     postLikes?: boolean | User$postLikesArgs<ExtArgs>
@@ -1836,6 +1920,7 @@ export namespace Prisma {
 
   export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "passwordHash" | "nickname" | "role" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    adminPreference?: boolean | User$adminPreferenceArgs<ExtArgs>
     posts?: boolean | User$postsArgs<ExtArgs>
     comments?: boolean | User$commentsArgs<ExtArgs>
     postLikes?: boolean | User$postLikesArgs<ExtArgs>
@@ -1846,6 +1931,7 @@ export namespace Prisma {
   export type $UserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "User"
     objects: {
+      adminPreference: Prisma.$AdminPreferencePayload<ExtArgs> | null
       posts: Prisma.$PostPayload<ExtArgs>[]
       comments: Prisma.$CommentPayload<ExtArgs>[]
       postLikes: Prisma.$PostLikePayload<ExtArgs>[]
@@ -2199,6 +2285,7 @@ export namespace Prisma {
    */
   export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    adminPreference<T extends User$adminPreferenceArgs<ExtArgs> = {}>(args?: Subset<T, User$adminPreferenceArgs<ExtArgs>>): Prisma__AdminPreferenceClient<$Result.GetResult<Prisma.$AdminPreferencePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     posts<T extends User$postsArgs<ExtArgs> = {}>(args?: Subset<T, User$postsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PostPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     comments<T extends User$commentsArgs<ExtArgs> = {}>(args?: Subset<T, User$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     postLikes<T extends User$postLikesArgs<ExtArgs> = {}>(args?: Subset<T, User$postLikesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PostLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2582,6 +2669,25 @@ export namespace Prisma {
   }
 
   /**
+   * User.adminPreference
+   */
+  export type User$adminPreferenceArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminPreference
+     */
+    select?: AdminPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminPreference
+     */
+    omit?: AdminPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminPreferenceInclude<ExtArgs> | null
+    where?: AdminPreferenceWhereInput
+  }
+
+  /**
    * User.posts
    */
   export type User$postsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2697,6 +2803,984 @@ export namespace Prisma {
 
 
   /**
+   * Model AdminPreference
+   */
+
+  export type AggregateAdminPreference = {
+    _count: AdminPreferenceCountAggregateOutputType | null
+    _avg: AdminPreferenceAvgAggregateOutputType | null
+    _sum: AdminPreferenceSumAggregateOutputType | null
+    _min: AdminPreferenceMinAggregateOutputType | null
+    _max: AdminPreferenceMaxAggregateOutputType | null
+  }
+
+  export type AdminPreferenceAvgAggregateOutputType = {
+    id: number | null
+    userId: number | null
+  }
+
+  export type AdminPreferenceSumAggregateOutputType = {
+    id: number | null
+    userId: number | null
+  }
+
+  export type AdminPreferenceMinAggregateOutputType = {
+    id: number | null
+    userId: number | null
+    heroBackgroundStoredName: string | null
+    heroBackgroundUrl: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AdminPreferenceMaxAggregateOutputType = {
+    id: number | null
+    userId: number | null
+    heroBackgroundStoredName: string | null
+    heroBackgroundUrl: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AdminPreferenceCountAggregateOutputType = {
+    id: number
+    userId: number
+    heroBackgroundStoredName: number
+    heroBackgroundUrl: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type AdminPreferenceAvgAggregateInputType = {
+    id?: true
+    userId?: true
+  }
+
+  export type AdminPreferenceSumAggregateInputType = {
+    id?: true
+    userId?: true
+  }
+
+  export type AdminPreferenceMinAggregateInputType = {
+    id?: true
+    userId?: true
+    heroBackgroundStoredName?: true
+    heroBackgroundUrl?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AdminPreferenceMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    heroBackgroundStoredName?: true
+    heroBackgroundUrl?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AdminPreferenceCountAggregateInputType = {
+    id?: true
+    userId?: true
+    heroBackgroundStoredName?: true
+    heroBackgroundUrl?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type AdminPreferenceAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AdminPreference to aggregate.
+     */
+    where?: AdminPreferenceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AdminPreferences to fetch.
+     */
+    orderBy?: AdminPreferenceOrderByWithRelationInput | AdminPreferenceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AdminPreferenceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AdminPreferences from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AdminPreferences.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AdminPreferences
+    **/
+    _count?: true | AdminPreferenceCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AdminPreferenceAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AdminPreferenceSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AdminPreferenceMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AdminPreferenceMaxAggregateInputType
+  }
+
+  export type GetAdminPreferenceAggregateType<T extends AdminPreferenceAggregateArgs> = {
+        [P in keyof T & keyof AggregateAdminPreference]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAdminPreference[P]>
+      : GetScalarType<T[P], AggregateAdminPreference[P]>
+  }
+
+
+
+
+  export type AdminPreferenceGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AdminPreferenceWhereInput
+    orderBy?: AdminPreferenceOrderByWithAggregationInput | AdminPreferenceOrderByWithAggregationInput[]
+    by: AdminPreferenceScalarFieldEnum[] | AdminPreferenceScalarFieldEnum
+    having?: AdminPreferenceScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AdminPreferenceCountAggregateInputType | true
+    _avg?: AdminPreferenceAvgAggregateInputType
+    _sum?: AdminPreferenceSumAggregateInputType
+    _min?: AdminPreferenceMinAggregateInputType
+    _max?: AdminPreferenceMaxAggregateInputType
+  }
+
+  export type AdminPreferenceGroupByOutputType = {
+    id: number
+    userId: number
+    heroBackgroundStoredName: string | null
+    heroBackgroundUrl: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: AdminPreferenceCountAggregateOutputType | null
+    _avg: AdminPreferenceAvgAggregateOutputType | null
+    _sum: AdminPreferenceSumAggregateOutputType | null
+    _min: AdminPreferenceMinAggregateOutputType | null
+    _max: AdminPreferenceMaxAggregateOutputType | null
+  }
+
+  type GetAdminPreferenceGroupByPayload<T extends AdminPreferenceGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AdminPreferenceGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AdminPreferenceGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AdminPreferenceGroupByOutputType[P]>
+            : GetScalarType<T[P], AdminPreferenceGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AdminPreferenceSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    heroBackgroundStoredName?: boolean
+    heroBackgroundUrl?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["adminPreference"]>
+
+
+
+  export type AdminPreferenceSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    heroBackgroundStoredName?: boolean
+    heroBackgroundUrl?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type AdminPreferenceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "heroBackgroundStoredName" | "heroBackgroundUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["adminPreference"]>
+  export type AdminPreferenceInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $AdminPreferencePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AdminPreference"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      userId: number
+      heroBackgroundStoredName: string | null
+      heroBackgroundUrl: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["adminPreference"]>
+    composites: {}
+  }
+
+  type AdminPreferenceGetPayload<S extends boolean | null | undefined | AdminPreferenceDefaultArgs> = $Result.GetResult<Prisma.$AdminPreferencePayload, S>
+
+  type AdminPreferenceCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AdminPreferenceFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AdminPreferenceCountAggregateInputType | true
+    }
+
+  export interface AdminPreferenceDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AdminPreference'], meta: { name: 'AdminPreference' } }
+    /**
+     * Find zero or one AdminPreference that matches the filter.
+     * @param {AdminPreferenceFindUniqueArgs} args - Arguments to find a AdminPreference
+     * @example
+     * // Get one AdminPreference
+     * const adminPreference = await prisma.adminPreference.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AdminPreferenceFindUniqueArgs>(args: SelectSubset<T, AdminPreferenceFindUniqueArgs<ExtArgs>>): Prisma__AdminPreferenceClient<$Result.GetResult<Prisma.$AdminPreferencePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AdminPreference that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AdminPreferenceFindUniqueOrThrowArgs} args - Arguments to find a AdminPreference
+     * @example
+     * // Get one AdminPreference
+     * const adminPreference = await prisma.adminPreference.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AdminPreferenceFindUniqueOrThrowArgs>(args: SelectSubset<T, AdminPreferenceFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AdminPreferenceClient<$Result.GetResult<Prisma.$AdminPreferencePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AdminPreference that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminPreferenceFindFirstArgs} args - Arguments to find a AdminPreference
+     * @example
+     * // Get one AdminPreference
+     * const adminPreference = await prisma.adminPreference.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AdminPreferenceFindFirstArgs>(args?: SelectSubset<T, AdminPreferenceFindFirstArgs<ExtArgs>>): Prisma__AdminPreferenceClient<$Result.GetResult<Prisma.$AdminPreferencePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AdminPreference that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminPreferenceFindFirstOrThrowArgs} args - Arguments to find a AdminPreference
+     * @example
+     * // Get one AdminPreference
+     * const adminPreference = await prisma.adminPreference.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AdminPreferenceFindFirstOrThrowArgs>(args?: SelectSubset<T, AdminPreferenceFindFirstOrThrowArgs<ExtArgs>>): Prisma__AdminPreferenceClient<$Result.GetResult<Prisma.$AdminPreferencePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AdminPreferences that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminPreferenceFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AdminPreferences
+     * const adminPreferences = await prisma.adminPreference.findMany()
+     * 
+     * // Get first 10 AdminPreferences
+     * const adminPreferences = await prisma.adminPreference.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const adminPreferenceWithIdOnly = await prisma.adminPreference.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AdminPreferenceFindManyArgs>(args?: SelectSubset<T, AdminPreferenceFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AdminPreferencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AdminPreference.
+     * @param {AdminPreferenceCreateArgs} args - Arguments to create a AdminPreference.
+     * @example
+     * // Create one AdminPreference
+     * const AdminPreference = await prisma.adminPreference.create({
+     *   data: {
+     *     // ... data to create a AdminPreference
+     *   }
+     * })
+     * 
+     */
+    create<T extends AdminPreferenceCreateArgs>(args: SelectSubset<T, AdminPreferenceCreateArgs<ExtArgs>>): Prisma__AdminPreferenceClient<$Result.GetResult<Prisma.$AdminPreferencePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AdminPreferences.
+     * @param {AdminPreferenceCreateManyArgs} args - Arguments to create many AdminPreferences.
+     * @example
+     * // Create many AdminPreferences
+     * const adminPreference = await prisma.adminPreference.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AdminPreferenceCreateManyArgs>(args?: SelectSubset<T, AdminPreferenceCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a AdminPreference.
+     * @param {AdminPreferenceDeleteArgs} args - Arguments to delete one AdminPreference.
+     * @example
+     * // Delete one AdminPreference
+     * const AdminPreference = await prisma.adminPreference.delete({
+     *   where: {
+     *     // ... filter to delete one AdminPreference
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AdminPreferenceDeleteArgs>(args: SelectSubset<T, AdminPreferenceDeleteArgs<ExtArgs>>): Prisma__AdminPreferenceClient<$Result.GetResult<Prisma.$AdminPreferencePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AdminPreference.
+     * @param {AdminPreferenceUpdateArgs} args - Arguments to update one AdminPreference.
+     * @example
+     * // Update one AdminPreference
+     * const adminPreference = await prisma.adminPreference.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AdminPreferenceUpdateArgs>(args: SelectSubset<T, AdminPreferenceUpdateArgs<ExtArgs>>): Prisma__AdminPreferenceClient<$Result.GetResult<Prisma.$AdminPreferencePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AdminPreferences.
+     * @param {AdminPreferenceDeleteManyArgs} args - Arguments to filter AdminPreferences to delete.
+     * @example
+     * // Delete a few AdminPreferences
+     * const { count } = await prisma.adminPreference.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AdminPreferenceDeleteManyArgs>(args?: SelectSubset<T, AdminPreferenceDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AdminPreferences.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminPreferenceUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AdminPreferences
+     * const adminPreference = await prisma.adminPreference.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AdminPreferenceUpdateManyArgs>(args: SelectSubset<T, AdminPreferenceUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one AdminPreference.
+     * @param {AdminPreferenceUpsertArgs} args - Arguments to update or create a AdminPreference.
+     * @example
+     * // Update or create a AdminPreference
+     * const adminPreference = await prisma.adminPreference.upsert({
+     *   create: {
+     *     // ... data to create a AdminPreference
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AdminPreference we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AdminPreferenceUpsertArgs>(args: SelectSubset<T, AdminPreferenceUpsertArgs<ExtArgs>>): Prisma__AdminPreferenceClient<$Result.GetResult<Prisma.$AdminPreferencePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AdminPreferences.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminPreferenceCountArgs} args - Arguments to filter AdminPreferences to count.
+     * @example
+     * // Count the number of AdminPreferences
+     * const count = await prisma.adminPreference.count({
+     *   where: {
+     *     // ... the filter for the AdminPreferences we want to count
+     *   }
+     * })
+    **/
+    count<T extends AdminPreferenceCountArgs>(
+      args?: Subset<T, AdminPreferenceCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AdminPreferenceCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AdminPreference.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminPreferenceAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AdminPreferenceAggregateArgs>(args: Subset<T, AdminPreferenceAggregateArgs>): Prisma.PrismaPromise<GetAdminPreferenceAggregateType<T>>
+
+    /**
+     * Group by AdminPreference.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AdminPreferenceGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AdminPreferenceGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AdminPreferenceGroupByArgs['orderBy'] }
+        : { orderBy?: AdminPreferenceGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AdminPreferenceGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAdminPreferenceGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AdminPreference model
+   */
+  readonly fields: AdminPreferenceFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AdminPreference.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AdminPreferenceClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AdminPreference model
+   */
+  interface AdminPreferenceFieldRefs {
+    readonly id: FieldRef<"AdminPreference", 'Int'>
+    readonly userId: FieldRef<"AdminPreference", 'Int'>
+    readonly heroBackgroundStoredName: FieldRef<"AdminPreference", 'String'>
+    readonly heroBackgroundUrl: FieldRef<"AdminPreference", 'String'>
+    readonly createdAt: FieldRef<"AdminPreference", 'DateTime'>
+    readonly updatedAt: FieldRef<"AdminPreference", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AdminPreference findUnique
+   */
+  export type AdminPreferenceFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminPreference
+     */
+    select?: AdminPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminPreference
+     */
+    omit?: AdminPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminPreferenceInclude<ExtArgs> | null
+    /**
+     * Filter, which AdminPreference to fetch.
+     */
+    where: AdminPreferenceWhereUniqueInput
+  }
+
+  /**
+   * AdminPreference findUniqueOrThrow
+   */
+  export type AdminPreferenceFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminPreference
+     */
+    select?: AdminPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminPreference
+     */
+    omit?: AdminPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminPreferenceInclude<ExtArgs> | null
+    /**
+     * Filter, which AdminPreference to fetch.
+     */
+    where: AdminPreferenceWhereUniqueInput
+  }
+
+  /**
+   * AdminPreference findFirst
+   */
+  export type AdminPreferenceFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminPreference
+     */
+    select?: AdminPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminPreference
+     */
+    omit?: AdminPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminPreferenceInclude<ExtArgs> | null
+    /**
+     * Filter, which AdminPreference to fetch.
+     */
+    where?: AdminPreferenceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AdminPreferences to fetch.
+     */
+    orderBy?: AdminPreferenceOrderByWithRelationInput | AdminPreferenceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AdminPreferences.
+     */
+    cursor?: AdminPreferenceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AdminPreferences from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AdminPreferences.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AdminPreferences.
+     */
+    distinct?: AdminPreferenceScalarFieldEnum | AdminPreferenceScalarFieldEnum[]
+  }
+
+  /**
+   * AdminPreference findFirstOrThrow
+   */
+  export type AdminPreferenceFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminPreference
+     */
+    select?: AdminPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminPreference
+     */
+    omit?: AdminPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminPreferenceInclude<ExtArgs> | null
+    /**
+     * Filter, which AdminPreference to fetch.
+     */
+    where?: AdminPreferenceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AdminPreferences to fetch.
+     */
+    orderBy?: AdminPreferenceOrderByWithRelationInput | AdminPreferenceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AdminPreferences.
+     */
+    cursor?: AdminPreferenceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AdminPreferences from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AdminPreferences.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AdminPreferences.
+     */
+    distinct?: AdminPreferenceScalarFieldEnum | AdminPreferenceScalarFieldEnum[]
+  }
+
+  /**
+   * AdminPreference findMany
+   */
+  export type AdminPreferenceFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminPreference
+     */
+    select?: AdminPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminPreference
+     */
+    omit?: AdminPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminPreferenceInclude<ExtArgs> | null
+    /**
+     * Filter, which AdminPreferences to fetch.
+     */
+    where?: AdminPreferenceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AdminPreferences to fetch.
+     */
+    orderBy?: AdminPreferenceOrderByWithRelationInput | AdminPreferenceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AdminPreferences.
+     */
+    cursor?: AdminPreferenceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AdminPreferences from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AdminPreferences.
+     */
+    skip?: number
+    distinct?: AdminPreferenceScalarFieldEnum | AdminPreferenceScalarFieldEnum[]
+  }
+
+  /**
+   * AdminPreference create
+   */
+  export type AdminPreferenceCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminPreference
+     */
+    select?: AdminPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminPreference
+     */
+    omit?: AdminPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminPreferenceInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AdminPreference.
+     */
+    data: XOR<AdminPreferenceCreateInput, AdminPreferenceUncheckedCreateInput>
+  }
+
+  /**
+   * AdminPreference createMany
+   */
+  export type AdminPreferenceCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AdminPreferences.
+     */
+    data: AdminPreferenceCreateManyInput | AdminPreferenceCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AdminPreference update
+   */
+  export type AdminPreferenceUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminPreference
+     */
+    select?: AdminPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminPreference
+     */
+    omit?: AdminPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminPreferenceInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AdminPreference.
+     */
+    data: XOR<AdminPreferenceUpdateInput, AdminPreferenceUncheckedUpdateInput>
+    /**
+     * Choose, which AdminPreference to update.
+     */
+    where: AdminPreferenceWhereUniqueInput
+  }
+
+  /**
+   * AdminPreference updateMany
+   */
+  export type AdminPreferenceUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AdminPreferences.
+     */
+    data: XOR<AdminPreferenceUpdateManyMutationInput, AdminPreferenceUncheckedUpdateManyInput>
+    /**
+     * Filter which AdminPreferences to update
+     */
+    where?: AdminPreferenceWhereInput
+    /**
+     * Limit how many AdminPreferences to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AdminPreference upsert
+   */
+  export type AdminPreferenceUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminPreference
+     */
+    select?: AdminPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminPreference
+     */
+    omit?: AdminPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminPreferenceInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AdminPreference to update in case it exists.
+     */
+    where: AdminPreferenceWhereUniqueInput
+    /**
+     * In case the AdminPreference found by the `where` argument doesn't exist, create a new AdminPreference with this data.
+     */
+    create: XOR<AdminPreferenceCreateInput, AdminPreferenceUncheckedCreateInput>
+    /**
+     * In case the AdminPreference was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AdminPreferenceUpdateInput, AdminPreferenceUncheckedUpdateInput>
+  }
+
+  /**
+   * AdminPreference delete
+   */
+  export type AdminPreferenceDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminPreference
+     */
+    select?: AdminPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminPreference
+     */
+    omit?: AdminPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminPreferenceInclude<ExtArgs> | null
+    /**
+     * Filter which AdminPreference to delete.
+     */
+    where: AdminPreferenceWhereUniqueInput
+  }
+
+  /**
+   * AdminPreference deleteMany
+   */
+  export type AdminPreferenceDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AdminPreferences to delete
+     */
+    where?: AdminPreferenceWhereInput
+    /**
+     * Limit how many AdminPreferences to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AdminPreference without action
+   */
+  export type AdminPreferenceDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AdminPreference
+     */
+    select?: AdminPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AdminPreference
+     */
+    omit?: AdminPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AdminPreferenceInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model Board
    */
 
@@ -2726,6 +3810,7 @@ export namespace Prisma {
     order: number | null
     isActive: boolean | null
     isAdminWriteOnly: boolean | null
+    isSystemProtected: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -2738,6 +3823,7 @@ export namespace Prisma {
     order: number | null
     isActive: boolean | null
     isAdminWriteOnly: boolean | null
+    isSystemProtected: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -2750,6 +3836,7 @@ export namespace Prisma {
     order: number
     isActive: number
     isAdminWriteOnly: number
+    isSystemProtected: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -2774,6 +3861,7 @@ export namespace Prisma {
     order?: true
     isActive?: true
     isAdminWriteOnly?: true
+    isSystemProtected?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -2786,6 +3874,7 @@ export namespace Prisma {
     order?: true
     isActive?: true
     isAdminWriteOnly?: true
+    isSystemProtected?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -2798,6 +3887,7 @@ export namespace Prisma {
     order?: true
     isActive?: true
     isAdminWriteOnly?: true
+    isSystemProtected?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -2897,6 +3987,7 @@ export namespace Prisma {
     order: number
     isActive: boolean
     isAdminWriteOnly: boolean
+    isSystemProtected: boolean
     createdAt: Date
     updatedAt: Date
     _count: BoardCountAggregateOutputType | null
@@ -2928,6 +4019,7 @@ export namespace Prisma {
     order?: boolean
     isActive?: boolean
     isAdminWriteOnly?: boolean
+    isSystemProtected?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     posts?: boolean | Board$postsArgs<ExtArgs>
@@ -2944,11 +4036,12 @@ export namespace Prisma {
     order?: boolean
     isActive?: boolean
     isAdminWriteOnly?: boolean
+    isSystemProtected?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type BoardOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "slug" | "title" | "description" | "order" | "isActive" | "isAdminWriteOnly" | "createdAt" | "updatedAt", ExtArgs["result"]["board"]>
+  export type BoardOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "slug" | "title" | "description" | "order" | "isActive" | "isAdminWriteOnly" | "isSystemProtected" | "createdAt" | "updatedAt", ExtArgs["result"]["board"]>
   export type BoardInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     posts?: boolean | Board$postsArgs<ExtArgs>
     _count?: boolean | BoardCountOutputTypeDefaultArgs<ExtArgs>
@@ -2967,6 +4060,7 @@ export namespace Prisma {
       order: number
       isActive: boolean
       isAdminWriteOnly: boolean
+      isSystemProtected: boolean
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["board"]>
@@ -3346,6 +4440,7 @@ export namespace Prisma {
     readonly order: FieldRef<"Board", 'Int'>
     readonly isActive: FieldRef<"Board", 'Boolean'>
     readonly isAdminWriteOnly: FieldRef<"Board", 'Boolean'>
+    readonly isSystemProtected: FieldRef<"Board", 'Boolean'>
     readonly createdAt: FieldRef<"Board", 'DateTime'>
     readonly updatedAt: FieldRef<"Board", 'DateTime'>
   }
@@ -9748,6 +10843,18 @@ export namespace Prisma {
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+  export const AdminPreferenceScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    heroBackgroundStoredName: 'heroBackgroundStoredName',
+    heroBackgroundUrl: 'heroBackgroundUrl',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type AdminPreferenceScalarFieldEnum = (typeof AdminPreferenceScalarFieldEnum)[keyof typeof AdminPreferenceScalarFieldEnum]
+
+
   export const BoardScalarFieldEnum: {
     id: 'id',
     slug: 'slug',
@@ -9756,6 +10863,7 @@ export namespace Prisma {
     order: 'order',
     isActive: 'isActive',
     isAdminWriteOnly: 'isAdminWriteOnly',
+    isSystemProtected: 'isSystemProtected',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -9866,6 +10974,14 @@ export namespace Prisma {
   };
 
   export type UserOrderByRelevanceFieldEnum = (typeof UserOrderByRelevanceFieldEnum)[keyof typeof UserOrderByRelevanceFieldEnum]
+
+
+  export const AdminPreferenceOrderByRelevanceFieldEnum: {
+    heroBackgroundStoredName: 'heroBackgroundStoredName',
+    heroBackgroundUrl: 'heroBackgroundUrl'
+  };
+
+  export type AdminPreferenceOrderByRelevanceFieldEnum = (typeof AdminPreferenceOrderByRelevanceFieldEnum)[keyof typeof AdminPreferenceOrderByRelevanceFieldEnum]
 
 
   export const BoardOrderByRelevanceFieldEnum: {
@@ -9979,6 +11095,7 @@ export namespace Prisma {
     role?: EnumUserRoleFilter<"User"> | $Enums.UserRole
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
+    adminPreference?: XOR<AdminPreferenceNullableScalarRelationFilter, AdminPreferenceWhereInput> | null
     posts?: PostListRelationFilter
     comments?: CommentListRelationFilter
     postLikes?: PostLikeListRelationFilter
@@ -9993,6 +11110,7 @@ export namespace Prisma {
     role?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    adminPreference?: AdminPreferenceOrderByWithRelationInput
     posts?: PostOrderByRelationAggregateInput
     comments?: CommentOrderByRelationAggregateInput
     postLikes?: PostLikeOrderByRelationAggregateInput
@@ -10011,6 +11129,7 @@ export namespace Prisma {
     role?: EnumUserRoleFilter<"User"> | $Enums.UserRole
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
+    adminPreference?: XOR<AdminPreferenceNullableScalarRelationFilter, AdminPreferenceWhereInput> | null
     posts?: PostListRelationFilter
     comments?: CommentListRelationFilter
     postLikes?: PostLikeListRelationFilter
@@ -10045,6 +11164,69 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
   }
 
+  export type AdminPreferenceWhereInput = {
+    AND?: AdminPreferenceWhereInput | AdminPreferenceWhereInput[]
+    OR?: AdminPreferenceWhereInput[]
+    NOT?: AdminPreferenceWhereInput | AdminPreferenceWhereInput[]
+    id?: IntFilter<"AdminPreference"> | number
+    userId?: IntFilter<"AdminPreference"> | number
+    heroBackgroundStoredName?: StringNullableFilter<"AdminPreference"> | string | null
+    heroBackgroundUrl?: StringNullableFilter<"AdminPreference"> | string | null
+    createdAt?: DateTimeFilter<"AdminPreference"> | Date | string
+    updatedAt?: DateTimeFilter<"AdminPreference"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type AdminPreferenceOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    heroBackgroundStoredName?: SortOrderInput | SortOrder
+    heroBackgroundUrl?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+    _relevance?: AdminPreferenceOrderByRelevanceInput
+  }
+
+  export type AdminPreferenceWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    userId?: number
+    AND?: AdminPreferenceWhereInput | AdminPreferenceWhereInput[]
+    OR?: AdminPreferenceWhereInput[]
+    NOT?: AdminPreferenceWhereInput | AdminPreferenceWhereInput[]
+    heroBackgroundStoredName?: StringNullableFilter<"AdminPreference"> | string | null
+    heroBackgroundUrl?: StringNullableFilter<"AdminPreference"> | string | null
+    createdAt?: DateTimeFilter<"AdminPreference"> | Date | string
+    updatedAt?: DateTimeFilter<"AdminPreference"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id" | "userId">
+
+  export type AdminPreferenceOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    heroBackgroundStoredName?: SortOrderInput | SortOrder
+    heroBackgroundUrl?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: AdminPreferenceCountOrderByAggregateInput
+    _avg?: AdminPreferenceAvgOrderByAggregateInput
+    _max?: AdminPreferenceMaxOrderByAggregateInput
+    _min?: AdminPreferenceMinOrderByAggregateInput
+    _sum?: AdminPreferenceSumOrderByAggregateInput
+  }
+
+  export type AdminPreferenceScalarWhereWithAggregatesInput = {
+    AND?: AdminPreferenceScalarWhereWithAggregatesInput | AdminPreferenceScalarWhereWithAggregatesInput[]
+    OR?: AdminPreferenceScalarWhereWithAggregatesInput[]
+    NOT?: AdminPreferenceScalarWhereWithAggregatesInput | AdminPreferenceScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"AdminPreference"> | number
+    userId?: IntWithAggregatesFilter<"AdminPreference"> | number
+    heroBackgroundStoredName?: StringNullableWithAggregatesFilter<"AdminPreference"> | string | null
+    heroBackgroundUrl?: StringNullableWithAggregatesFilter<"AdminPreference"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"AdminPreference"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AdminPreference"> | Date | string
+  }
+
   export type BoardWhereInput = {
     AND?: BoardWhereInput | BoardWhereInput[]
     OR?: BoardWhereInput[]
@@ -10056,6 +11238,7 @@ export namespace Prisma {
     order?: IntFilter<"Board"> | number
     isActive?: BoolFilter<"Board"> | boolean
     isAdminWriteOnly?: BoolFilter<"Board"> | boolean
+    isSystemProtected?: BoolFilter<"Board"> | boolean
     createdAt?: DateTimeFilter<"Board"> | Date | string
     updatedAt?: DateTimeFilter<"Board"> | Date | string
     posts?: PostListRelationFilter
@@ -10069,6 +11252,7 @@ export namespace Prisma {
     order?: SortOrder
     isActive?: SortOrder
     isAdminWriteOnly?: SortOrder
+    isSystemProtected?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     posts?: PostOrderByRelationAggregateInput
@@ -10086,6 +11270,7 @@ export namespace Prisma {
     order?: IntFilter<"Board"> | number
     isActive?: BoolFilter<"Board"> | boolean
     isAdminWriteOnly?: BoolFilter<"Board"> | boolean
+    isSystemProtected?: BoolFilter<"Board"> | boolean
     createdAt?: DateTimeFilter<"Board"> | Date | string
     updatedAt?: DateTimeFilter<"Board"> | Date | string
     posts?: PostListRelationFilter
@@ -10099,6 +11284,7 @@ export namespace Prisma {
     order?: SortOrder
     isActive?: SortOrder
     isAdminWriteOnly?: SortOrder
+    isSystemProtected?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: BoardCountOrderByAggregateInput
@@ -10119,6 +11305,7 @@ export namespace Prisma {
     order?: IntWithAggregatesFilter<"Board"> | number
     isActive?: BoolWithAggregatesFilter<"Board"> | boolean
     isAdminWriteOnly?: BoolWithAggregatesFilter<"Board"> | boolean
+    isSystemProtected?: BoolWithAggregatesFilter<"Board"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"Board"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Board"> | Date | string
   }
@@ -10563,6 +11750,7 @@ export namespace Prisma {
     role?: $Enums.UserRole
     createdAt?: Date | string
     updatedAt?: Date | string
+    adminPreference?: AdminPreferenceCreateNestedOneWithoutUserInput
     posts?: PostCreateNestedManyWithoutAuthorInput
     comments?: CommentCreateNestedManyWithoutAuthorInput
     postLikes?: PostLikeCreateNestedManyWithoutUserInput
@@ -10577,6 +11765,7 @@ export namespace Prisma {
     role?: $Enums.UserRole
     createdAt?: Date | string
     updatedAt?: Date | string
+    adminPreference?: AdminPreferenceUncheckedCreateNestedOneWithoutUserInput
     posts?: PostUncheckedCreateNestedManyWithoutAuthorInput
     comments?: CommentUncheckedCreateNestedManyWithoutAuthorInput
     postLikes?: PostLikeUncheckedCreateNestedManyWithoutUserInput
@@ -10590,6 +11779,7 @@ export namespace Prisma {
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    adminPreference?: AdminPreferenceUpdateOneWithoutUserNestedInput
     posts?: PostUpdateManyWithoutAuthorNestedInput
     comments?: CommentUpdateManyWithoutAuthorNestedInput
     postLikes?: PostLikeUpdateManyWithoutUserNestedInput
@@ -10604,6 +11794,7 @@ export namespace Prisma {
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    adminPreference?: AdminPreferenceUncheckedUpdateOneWithoutUserNestedInput
     posts?: PostUncheckedUpdateManyWithoutAuthorNestedInput
     comments?: CommentUncheckedUpdateManyWithoutAuthorNestedInput
     postLikes?: PostLikeUncheckedUpdateManyWithoutUserNestedInput
@@ -10639,6 +11830,65 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type AdminPreferenceCreateInput = {
+    heroBackgroundStoredName?: string | null
+    heroBackgroundUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutAdminPreferenceInput
+  }
+
+  export type AdminPreferenceUncheckedCreateInput = {
+    id?: number
+    userId: number
+    heroBackgroundStoredName?: string | null
+    heroBackgroundUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AdminPreferenceUpdateInput = {
+    heroBackgroundStoredName?: NullableStringFieldUpdateOperationsInput | string | null
+    heroBackgroundUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutAdminPreferenceNestedInput
+  }
+
+  export type AdminPreferenceUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    userId?: IntFieldUpdateOperationsInput | number
+    heroBackgroundStoredName?: NullableStringFieldUpdateOperationsInput | string | null
+    heroBackgroundUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AdminPreferenceCreateManyInput = {
+    id?: number
+    userId: number
+    heroBackgroundStoredName?: string | null
+    heroBackgroundUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AdminPreferenceUpdateManyMutationInput = {
+    heroBackgroundStoredName?: NullableStringFieldUpdateOperationsInput | string | null
+    heroBackgroundUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AdminPreferenceUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    userId?: IntFieldUpdateOperationsInput | number
+    heroBackgroundStoredName?: NullableStringFieldUpdateOperationsInput | string | null
+    heroBackgroundUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type BoardCreateInput = {
     slug: string
     title: string
@@ -10646,6 +11896,7 @@ export namespace Prisma {
     order?: number
     isActive?: boolean
     isAdminWriteOnly?: boolean
+    isSystemProtected?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     posts?: PostCreateNestedManyWithoutBoardInput
@@ -10659,6 +11910,7 @@ export namespace Prisma {
     order?: number
     isActive?: boolean
     isAdminWriteOnly?: boolean
+    isSystemProtected?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     posts?: PostUncheckedCreateNestedManyWithoutBoardInput
@@ -10671,6 +11923,7 @@ export namespace Prisma {
     order?: IntFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     isAdminWriteOnly?: BoolFieldUpdateOperationsInput | boolean
+    isSystemProtected?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     posts?: PostUpdateManyWithoutBoardNestedInput
@@ -10684,6 +11937,7 @@ export namespace Prisma {
     order?: IntFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     isAdminWriteOnly?: BoolFieldUpdateOperationsInput | boolean
+    isSystemProtected?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     posts?: PostUncheckedUpdateManyWithoutBoardNestedInput
@@ -10697,6 +11951,7 @@ export namespace Prisma {
     order?: number
     isActive?: boolean
     isAdminWriteOnly?: boolean
+    isSystemProtected?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -10708,6 +11963,7 @@ export namespace Prisma {
     order?: IntFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     isAdminWriteOnly?: BoolFieldUpdateOperationsInput | boolean
+    isSystemProtected?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -10720,6 +11976,7 @@ export namespace Prisma {
     order?: IntFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     isAdminWriteOnly?: BoolFieldUpdateOperationsInput | boolean
+    isSystemProtected?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -11203,6 +12460,11 @@ export namespace Prisma {
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
   }
 
+  export type AdminPreferenceNullableScalarRelationFilter = {
+    is?: AdminPreferenceWhereInput | null
+    isNot?: AdminPreferenceWhereInput | null
+  }
+
   export type PostListRelationFilter = {
     every?: PostWhereInput
     some?: PostWhereInput
@@ -11368,6 +12630,54 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type UserScalarRelationFilter = {
+    is?: UserWhereInput
+    isNot?: UserWhereInput
+  }
+
+  export type AdminPreferenceOrderByRelevanceInput = {
+    fields: AdminPreferenceOrderByRelevanceFieldEnum | AdminPreferenceOrderByRelevanceFieldEnum[]
+    sort: SortOrder
+    search: string
+  }
+
+  export type AdminPreferenceCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    heroBackgroundStoredName?: SortOrder
+    heroBackgroundUrl?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AdminPreferenceAvgOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+  }
+
+  export type AdminPreferenceMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    heroBackgroundStoredName?: SortOrder
+    heroBackgroundUrl?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AdminPreferenceMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    heroBackgroundStoredName?: SortOrder
+    heroBackgroundUrl?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AdminPreferenceSumOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+  }
+
   export type BoolFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolFilter<$PrismaModel> | boolean
@@ -11387,6 +12697,7 @@ export namespace Prisma {
     order?: SortOrder
     isActive?: SortOrder
     isAdminWriteOnly?: SortOrder
+    isSystemProtected?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -11404,6 +12715,7 @@ export namespace Prisma {
     order?: SortOrder
     isActive?: SortOrder
     isAdminWriteOnly?: SortOrder
+    isSystemProtected?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -11416,6 +12728,7 @@ export namespace Prisma {
     order?: SortOrder
     isActive?: SortOrder
     isAdminWriteOnly?: SortOrder
+    isSystemProtected?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -11447,11 +12760,6 @@ export namespace Prisma {
   export type BoardScalarRelationFilter = {
     is?: BoardWhereInput
     isNot?: BoardWhereInput
-  }
-
-  export type UserScalarRelationFilter = {
-    is?: UserWhereInput
-    isNot?: UserWhereInput
   }
 
   export type PostOrderByRelevanceInput = {
@@ -11782,6 +13090,12 @@ export namespace Prisma {
     order?: SortOrder
   }
 
+  export type AdminPreferenceCreateNestedOneWithoutUserInput = {
+    create?: XOR<AdminPreferenceCreateWithoutUserInput, AdminPreferenceUncheckedCreateWithoutUserInput>
+    connectOrCreate?: AdminPreferenceCreateOrConnectWithoutUserInput
+    connect?: AdminPreferenceWhereUniqueInput
+  }
+
   export type PostCreateNestedManyWithoutAuthorInput = {
     create?: XOR<PostCreateWithoutAuthorInput, PostUncheckedCreateWithoutAuthorInput> | PostCreateWithoutAuthorInput[] | PostUncheckedCreateWithoutAuthorInput[]
     connectOrCreate?: PostCreateOrConnectWithoutAuthorInput | PostCreateOrConnectWithoutAuthorInput[]
@@ -11808,6 +13122,12 @@ export namespace Prisma {
     connectOrCreate?: PostViewCreateOrConnectWithoutUserInput | PostViewCreateOrConnectWithoutUserInput[]
     createMany?: PostViewCreateManyUserInputEnvelope
     connect?: PostViewWhereUniqueInput | PostViewWhereUniqueInput[]
+  }
+
+  export type AdminPreferenceUncheckedCreateNestedOneWithoutUserInput = {
+    create?: XOR<AdminPreferenceCreateWithoutUserInput, AdminPreferenceUncheckedCreateWithoutUserInput>
+    connectOrCreate?: AdminPreferenceCreateOrConnectWithoutUserInput
+    connect?: AdminPreferenceWhereUniqueInput
   }
 
   export type PostUncheckedCreateNestedManyWithoutAuthorInput = {
@@ -11852,6 +13172,16 @@ export namespace Prisma {
 
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
+  }
+
+  export type AdminPreferenceUpdateOneWithoutUserNestedInput = {
+    create?: XOR<AdminPreferenceCreateWithoutUserInput, AdminPreferenceUncheckedCreateWithoutUserInput>
+    connectOrCreate?: AdminPreferenceCreateOrConnectWithoutUserInput
+    upsert?: AdminPreferenceUpsertWithoutUserInput
+    disconnect?: AdminPreferenceWhereInput | boolean
+    delete?: AdminPreferenceWhereInput | boolean
+    connect?: AdminPreferenceWhereUniqueInput
+    update?: XOR<XOR<AdminPreferenceUpdateToOneWithWhereWithoutUserInput, AdminPreferenceUpdateWithoutUserInput>, AdminPreferenceUncheckedUpdateWithoutUserInput>
   }
 
   export type PostUpdateManyWithoutAuthorNestedInput = {
@@ -11918,6 +13248,16 @@ export namespace Prisma {
     divide?: number
   }
 
+  export type AdminPreferenceUncheckedUpdateOneWithoutUserNestedInput = {
+    create?: XOR<AdminPreferenceCreateWithoutUserInput, AdminPreferenceUncheckedCreateWithoutUserInput>
+    connectOrCreate?: AdminPreferenceCreateOrConnectWithoutUserInput
+    upsert?: AdminPreferenceUpsertWithoutUserInput
+    disconnect?: AdminPreferenceWhereInput | boolean
+    delete?: AdminPreferenceWhereInput | boolean
+    connect?: AdminPreferenceWhereUniqueInput
+    update?: XOR<XOR<AdminPreferenceUpdateToOneWithWhereWithoutUserInput, AdminPreferenceUpdateWithoutUserInput>, AdminPreferenceUncheckedUpdateWithoutUserInput>
+  }
+
   export type PostUncheckedUpdateManyWithoutAuthorNestedInput = {
     create?: XOR<PostCreateWithoutAuthorInput, PostUncheckedCreateWithoutAuthorInput> | PostCreateWithoutAuthorInput[] | PostUncheckedCreateWithoutAuthorInput[]
     connectOrCreate?: PostCreateOrConnectWithoutAuthorInput | PostCreateOrConnectWithoutAuthorInput[]
@@ -11972,6 +13312,20 @@ export namespace Prisma {
     update?: PostViewUpdateWithWhereUniqueWithoutUserInput | PostViewUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: PostViewUpdateManyWithWhereWithoutUserInput | PostViewUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: PostViewScalarWhereInput | PostViewScalarWhereInput[]
+  }
+
+  export type UserCreateNestedOneWithoutAdminPreferenceInput = {
+    create?: XOR<UserCreateWithoutAdminPreferenceInput, UserUncheckedCreateWithoutAdminPreferenceInput>
+    connectOrCreate?: UserCreateOrConnectWithoutAdminPreferenceInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutAdminPreferenceNestedInput = {
+    create?: XOR<UserCreateWithoutAdminPreferenceInput, UserUncheckedCreateWithoutAdminPreferenceInput>
+    connectOrCreate?: UserCreateOrConnectWithoutAdminPreferenceInput
+    upsert?: UserUpsertWithoutAdminPreferenceInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutAdminPreferenceInput, UserUpdateWithoutAdminPreferenceInput>, UserUncheckedUpdateWithoutAdminPreferenceInput>
   }
 
   export type PostCreateNestedManyWithoutBoardInput = {
@@ -12478,6 +13832,26 @@ export namespace Prisma {
     _max?: NestedEnumAssetCategoryFilter<$PrismaModel>
   }
 
+  export type AdminPreferenceCreateWithoutUserInput = {
+    heroBackgroundStoredName?: string | null
+    heroBackgroundUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AdminPreferenceUncheckedCreateWithoutUserInput = {
+    id?: number
+    heroBackgroundStoredName?: string | null
+    heroBackgroundUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AdminPreferenceCreateOrConnectWithoutUserInput = {
+    where: AdminPreferenceWhereUniqueInput
+    create: XOR<AdminPreferenceCreateWithoutUserInput, AdminPreferenceUncheckedCreateWithoutUserInput>
+  }
+
   export type PostCreateWithoutAuthorInput = {
     title: string
     content: string
@@ -12586,6 +13960,32 @@ export namespace Prisma {
   export type PostViewCreateManyUserInputEnvelope = {
     data: PostViewCreateManyUserInput | PostViewCreateManyUserInput[]
     skipDuplicates?: boolean
+  }
+
+  export type AdminPreferenceUpsertWithoutUserInput = {
+    update: XOR<AdminPreferenceUpdateWithoutUserInput, AdminPreferenceUncheckedUpdateWithoutUserInput>
+    create: XOR<AdminPreferenceCreateWithoutUserInput, AdminPreferenceUncheckedCreateWithoutUserInput>
+    where?: AdminPreferenceWhereInput
+  }
+
+  export type AdminPreferenceUpdateToOneWithWhereWithoutUserInput = {
+    where?: AdminPreferenceWhereInput
+    data: XOR<AdminPreferenceUpdateWithoutUserInput, AdminPreferenceUncheckedUpdateWithoutUserInput>
+  }
+
+  export type AdminPreferenceUpdateWithoutUserInput = {
+    heroBackgroundStoredName?: NullableStringFieldUpdateOperationsInput | string | null
+    heroBackgroundUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AdminPreferenceUncheckedUpdateWithoutUserInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    heroBackgroundStoredName?: NullableStringFieldUpdateOperationsInput | string | null
+    heroBackgroundUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PostUpsertWithWhereUniqueWithoutAuthorInput = {
@@ -12702,6 +14102,76 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"PostView"> | Date | string
   }
 
+  export type UserCreateWithoutAdminPreferenceInput = {
+    email: string
+    passwordHash?: string | null
+    nickname?: string
+    role?: $Enums.UserRole
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    posts?: PostCreateNestedManyWithoutAuthorInput
+    comments?: CommentCreateNestedManyWithoutAuthorInput
+    postLikes?: PostLikeCreateNestedManyWithoutUserInput
+    postViews?: PostViewCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutAdminPreferenceInput = {
+    id?: number
+    email: string
+    passwordHash?: string | null
+    nickname?: string
+    role?: $Enums.UserRole
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    posts?: PostUncheckedCreateNestedManyWithoutAuthorInput
+    comments?: CommentUncheckedCreateNestedManyWithoutAuthorInput
+    postLikes?: PostLikeUncheckedCreateNestedManyWithoutUserInput
+    postViews?: PostViewUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutAdminPreferenceInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutAdminPreferenceInput, UserUncheckedCreateWithoutAdminPreferenceInput>
+  }
+
+  export type UserUpsertWithoutAdminPreferenceInput = {
+    update: XOR<UserUpdateWithoutAdminPreferenceInput, UserUncheckedUpdateWithoutAdminPreferenceInput>
+    create: XOR<UserCreateWithoutAdminPreferenceInput, UserUncheckedCreateWithoutAdminPreferenceInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutAdminPreferenceInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutAdminPreferenceInput, UserUncheckedUpdateWithoutAdminPreferenceInput>
+  }
+
+  export type UserUpdateWithoutAdminPreferenceInput = {
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    nickname?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    posts?: PostUpdateManyWithoutAuthorNestedInput
+    comments?: CommentUpdateManyWithoutAuthorNestedInput
+    postLikes?: PostLikeUpdateManyWithoutUserNestedInput
+    postViews?: PostViewUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutAdminPreferenceInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    nickname?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    posts?: PostUncheckedUpdateManyWithoutAuthorNestedInput
+    comments?: CommentUncheckedUpdateManyWithoutAuthorNestedInput
+    postLikes?: PostLikeUncheckedUpdateManyWithoutUserNestedInput
+    postViews?: PostViewUncheckedUpdateManyWithoutUserNestedInput
+  }
+
   export type PostCreateWithoutBoardInput = {
     title: string
     content: string
@@ -12768,6 +14238,7 @@ export namespace Prisma {
     order?: number
     isActive?: boolean
     isAdminWriteOnly?: boolean
+    isSystemProtected?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -12780,6 +14251,7 @@ export namespace Prisma {
     order?: number
     isActive?: boolean
     isAdminWriteOnly?: boolean
+    isSystemProtected?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -12796,6 +14268,7 @@ export namespace Prisma {
     role?: $Enums.UserRole
     createdAt?: Date | string
     updatedAt?: Date | string
+    adminPreference?: AdminPreferenceCreateNestedOneWithoutUserInput
     comments?: CommentCreateNestedManyWithoutAuthorInput
     postLikes?: PostLikeCreateNestedManyWithoutUserInput
     postViews?: PostViewCreateNestedManyWithoutUserInput
@@ -12809,6 +14282,7 @@ export namespace Prisma {
     role?: $Enums.UserRole
     createdAt?: Date | string
     updatedAt?: Date | string
+    adminPreference?: AdminPreferenceUncheckedCreateNestedOneWithoutUserInput
     comments?: CommentUncheckedCreateNestedManyWithoutAuthorInput
     postLikes?: PostLikeUncheckedCreateNestedManyWithoutUserInput
     postViews?: PostViewUncheckedCreateNestedManyWithoutUserInput
@@ -12904,6 +14378,7 @@ export namespace Prisma {
     order?: IntFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     isAdminWriteOnly?: BoolFieldUpdateOperationsInput | boolean
+    isSystemProtected?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -12916,6 +14391,7 @@ export namespace Prisma {
     order?: IntFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     isAdminWriteOnly?: BoolFieldUpdateOperationsInput | boolean
+    isSystemProtected?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -12938,6 +14414,7 @@ export namespace Prisma {
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    adminPreference?: AdminPreferenceUpdateOneWithoutUserNestedInput
     comments?: CommentUpdateManyWithoutAuthorNestedInput
     postLikes?: PostLikeUpdateManyWithoutUserNestedInput
     postViews?: PostViewUpdateManyWithoutUserNestedInput
@@ -12951,6 +14428,7 @@ export namespace Prisma {
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    adminPreference?: AdminPreferenceUncheckedUpdateOneWithoutUserNestedInput
     comments?: CommentUncheckedUpdateManyWithoutAuthorNestedInput
     postLikes?: PostLikeUncheckedUpdateManyWithoutUserNestedInput
     postViews?: PostViewUncheckedUpdateManyWithoutUserNestedInput
@@ -13049,6 +14527,7 @@ export namespace Prisma {
     role?: $Enums.UserRole
     createdAt?: Date | string
     updatedAt?: Date | string
+    adminPreference?: AdminPreferenceCreateNestedOneWithoutUserInput
     posts?: PostCreateNestedManyWithoutAuthorInput
     postLikes?: PostLikeCreateNestedManyWithoutUserInput
     postViews?: PostViewCreateNestedManyWithoutUserInput
@@ -13062,6 +14541,7 @@ export namespace Prisma {
     role?: $Enums.UserRole
     createdAt?: Date | string
     updatedAt?: Date | string
+    adminPreference?: AdminPreferenceUncheckedCreateNestedOneWithoutUserInput
     posts?: PostUncheckedCreateNestedManyWithoutAuthorInput
     postLikes?: PostLikeUncheckedCreateNestedManyWithoutUserInput
     postViews?: PostViewUncheckedCreateNestedManyWithoutUserInput
@@ -13134,6 +14614,7 @@ export namespace Prisma {
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    adminPreference?: AdminPreferenceUpdateOneWithoutUserNestedInput
     posts?: PostUpdateManyWithoutAuthorNestedInput
     postLikes?: PostLikeUpdateManyWithoutUserNestedInput
     postViews?: PostViewUpdateManyWithoutUserNestedInput
@@ -13147,6 +14628,7 @@ export namespace Prisma {
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    adminPreference?: AdminPreferenceUncheckedUpdateOneWithoutUserNestedInput
     posts?: PostUncheckedUpdateManyWithoutAuthorNestedInput
     postLikes?: PostLikeUncheckedUpdateManyWithoutUserNestedInput
     postViews?: PostViewUncheckedUpdateManyWithoutUserNestedInput
@@ -13197,6 +14679,7 @@ export namespace Prisma {
     role?: $Enums.UserRole
     createdAt?: Date | string
     updatedAt?: Date | string
+    adminPreference?: AdminPreferenceCreateNestedOneWithoutUserInput
     posts?: PostCreateNestedManyWithoutAuthorInput
     comments?: CommentCreateNestedManyWithoutAuthorInput
     postViews?: PostViewCreateNestedManyWithoutUserInput
@@ -13210,6 +14693,7 @@ export namespace Prisma {
     role?: $Enums.UserRole
     createdAt?: Date | string
     updatedAt?: Date | string
+    adminPreference?: AdminPreferenceUncheckedCreateNestedOneWithoutUserInput
     posts?: PostUncheckedCreateNestedManyWithoutAuthorInput
     comments?: CommentUncheckedCreateNestedManyWithoutAuthorInput
     postViews?: PostViewUncheckedCreateNestedManyWithoutUserInput
@@ -13282,6 +14766,7 @@ export namespace Prisma {
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    adminPreference?: AdminPreferenceUpdateOneWithoutUserNestedInput
     posts?: PostUpdateManyWithoutAuthorNestedInput
     comments?: CommentUpdateManyWithoutAuthorNestedInput
     postViews?: PostViewUpdateManyWithoutUserNestedInput
@@ -13295,6 +14780,7 @@ export namespace Prisma {
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    adminPreference?: AdminPreferenceUncheckedUpdateOneWithoutUserNestedInput
     posts?: PostUncheckedUpdateManyWithoutAuthorNestedInput
     comments?: CommentUncheckedUpdateManyWithoutAuthorNestedInput
     postViews?: PostViewUncheckedUpdateManyWithoutUserNestedInput
@@ -13345,6 +14831,7 @@ export namespace Prisma {
     role?: $Enums.UserRole
     createdAt?: Date | string
     updatedAt?: Date | string
+    adminPreference?: AdminPreferenceCreateNestedOneWithoutUserInput
     posts?: PostCreateNestedManyWithoutAuthorInput
     comments?: CommentCreateNestedManyWithoutAuthorInput
     postLikes?: PostLikeCreateNestedManyWithoutUserInput
@@ -13358,6 +14845,7 @@ export namespace Prisma {
     role?: $Enums.UserRole
     createdAt?: Date | string
     updatedAt?: Date | string
+    adminPreference?: AdminPreferenceUncheckedCreateNestedOneWithoutUserInput
     posts?: PostUncheckedCreateNestedManyWithoutAuthorInput
     comments?: CommentUncheckedCreateNestedManyWithoutAuthorInput
     postLikes?: PostLikeUncheckedCreateNestedManyWithoutUserInput
@@ -13430,6 +14918,7 @@ export namespace Prisma {
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    adminPreference?: AdminPreferenceUpdateOneWithoutUserNestedInput
     posts?: PostUpdateManyWithoutAuthorNestedInput
     comments?: CommentUpdateManyWithoutAuthorNestedInput
     postLikes?: PostLikeUpdateManyWithoutUserNestedInput
@@ -13443,6 +14932,7 @@ export namespace Prisma {
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    adminPreference?: AdminPreferenceUncheckedUpdateOneWithoutUserNestedInput
     posts?: PostUncheckedUpdateManyWithoutAuthorNestedInput
     comments?: CommentUncheckedUpdateManyWithoutAuthorNestedInput
     postLikes?: PostLikeUncheckedUpdateManyWithoutUserNestedInput

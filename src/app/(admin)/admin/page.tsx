@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getAdminHeroBackgroundUrl } from "@/lib/admin-preferences";
 import { prisma } from "@/lib/prisma";
+import { attachSystemProtection, ensureSystemBoards } from "@/lib/system-boards";
 import { AdminControlPanel } from "./_components/admin-control-panel";
 
 export const metadata: Metadata = {
@@ -23,7 +25,9 @@ export default async function AdminPage() {
     redirect("/lounge");
   }
 
-  const [activeBoards, inactiveBoards, activeAssets, trashedAssets, landingVideos] =
+  await ensureSystemBoards();
+
+  const [activeBoardsRaw, inactiveBoardsRaw, activeAssets, trashedAssets, landingVideos, adminHeroBackgroundUrl] =
     await Promise.all([
       prisma.board.findMany({
         where: { isActive: true },
@@ -101,7 +105,12 @@ export default async function AdminPage() {
           updatedAt: true,
         },
       }),
+      getAdminHeroBackgroundUrl(Number(session.user.id)),
     ]);
+  const [activeBoards, inactiveBoards] = await Promise.all([
+    attachSystemProtection(activeBoardsRaw),
+    attachSystemProtection(inactiveBoardsRaw),
+  ]);
 
   return (
     <AdminControlPanel
@@ -110,6 +119,7 @@ export default async function AdminPage() {
       initialActiveAssets={activeAssets}
       initialTrashedAssets={trashedAssets}
       initialLandingVideos={landingVideos}
+      initialHeroBackgroundUrl={adminHeroBackgroundUrl}
     />
   );
 }

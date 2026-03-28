@@ -26,12 +26,23 @@ model User {
   passwordHash String?
   nickname     String     @default("new-user")
   role         UserRole   @default(USER)
+  adminPreference AdminPreference?
   posts        Post[]
   comments     Comment[]
   postLikes    PostLike[]
   postViews    PostView[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+}
+
+model AdminPreference {
+  id                       Int      @id @default(autoincrement())
+  userId                   Int      @unique
+  heroBackgroundStoredName String?
+  heroBackgroundUrl        String?
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 }
 
 model Board {
@@ -42,6 +53,7 @@ model Board {
   order       Int      @default(0)
   isActive    Boolean  @default(true)
   isAdminWriteOnly Boolean @default(false)
+  isSystemProtected Boolean @default(false)
   posts       Post[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

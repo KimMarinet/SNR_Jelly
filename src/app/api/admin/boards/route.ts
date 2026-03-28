@@ -3,6 +3,7 @@ import { Prisma } from "@/generated/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/route-auth";
+import { attachSystemProtection, ensureSystemBoards } from "@/lib/system-boards";
 
 type CreateBoardBody = {
   title?: string;
@@ -64,6 +65,8 @@ export async function GET(request: NextRequest) {
     return unauthorizedResponse();
   }
 
+  await ensureSystemBoards();
+
   const status = parseBoardStatusParam(request.nextUrl.searchParams.get("status"));
 
   const boards = await prisma.board.findMany({
@@ -88,7 +91,7 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  return NextResponse.json({ boards });
+  return NextResponse.json({ boards: await attachSystemProtection(boards) });
 }
 
 export async function POST(request: NextRequest) {
@@ -96,6 +99,8 @@ export async function POST(request: NextRequest) {
   if (!admin) {
     return unauthorizedResponse();
   }
+
+  await ensureSystemBoards();
 
   const body = (await request.json()) as CreateBoardBody;
   const parsed = parseCreateBoardBody(body);
@@ -123,12 +128,13 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+    const [protectedBoard] = await attachSystemProtection([board]);
 
     revalidateTag("board-navigation", "max");
     revalidatePath("/lounge");
     revalidatePath(`/board/${board.slug}`);
 
-    return NextResponse.json({ board }, { status: 201 });
+    return NextResponse.json({ board: protectedBoard }, { status: 201 });
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&

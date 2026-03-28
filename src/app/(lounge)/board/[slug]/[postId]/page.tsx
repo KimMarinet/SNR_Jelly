@@ -5,6 +5,7 @@ import { PostCommentSection } from "@/components/post/post-comment-section";
 import { PostReactionBar } from "@/components/post/post-reaction-bar";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ensureSystemBoards } from "@/lib/system-boards";
 
 type BoardPostDetailPageProps = {
   params: Promise<{ slug: string; postId: string }>;
@@ -23,6 +24,8 @@ export default async function BoardPostDetailPage({ params }: BoardPostDetailPag
   if (!postId) {
     notFound();
   }
+
+  await ensureSystemBoards();
 
   const session = await getServerSession(authOptions);
   const sessionUserId = Number(session?.user?.id ?? 0);

@@ -8,6 +8,7 @@ export type AdminBoard = {
   order: number;
   isActive: boolean;
   isAdminWriteOnly: boolean;
+  isSystemProtected: boolean;
   _count?: { posts: number };
 };
 
@@ -47,4 +48,8 @@ export type AdminLandingVideo = {
   isActive: boolean;
   createdAt: string | Date;
   updatedAt: string | Date;
+};
+
+export type AdminHeroBackgroundPreference = {
+  backgroundImageUrl: string | null;
 };

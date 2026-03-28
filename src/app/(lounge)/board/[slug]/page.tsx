@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getBoardBySlug } from "@/lib/board-navigation";
 import { prisma } from "@/lib/prisma";
+import { ensureSystemBoards } from "@/lib/system-boards";
 
 type BoardPageProps = {
   params: Promise<{ slug: string }>;
@@ -35,6 +36,7 @@ export default async function BoardPage({ params, searchParams }: BoardPageProps
   const { slug } = await params;
   const { page: pageParam } = await searchParams;
   const requestedPage = parsePageParam(pageParam);
+  await ensureSystemBoards();
   const session = await getServerSession(authOptions);
   const sessionUserId = Number(session?.user?.id ?? 0);
   const currentUserId = Number.isInteger(sessionUserId) && sessionUserId > 0 ? sessionUserId : null;

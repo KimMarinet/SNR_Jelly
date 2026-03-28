@@ -92,7 +92,7 @@ export function AssetManager({
       }
       onStatus(`업로드 완료: ${data.asset.originalName}`);
     } catch (caught) {
-      onStatus(caught instanceof Error ? caught.message : "파일 업로드에 실패했습니다.");
+      onStatus(caught instanceof Error ? caught.message : "업로드에 실패했습니다.");
     } finally {
       setUploading(false);
     }
@@ -154,63 +154,116 @@ export function AssetManager({
   }
 
   return (
-    <section className="rounded-2xl border border-white/15 bg-black/30 p-5">
-      <h2 className="text-lg font-semibold text-white">파일 관리</h2>
-      <form onSubmit={handleUpload} className="mt-4 grid gap-3 md:grid-cols-4">
-        <select
-          value={uploadCategory}
-          onChange={(event) => setUploadCategory(event.target.value as AssetCategory)}
-          className="rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none"
-        >
-          {CATEGORY_OPTIONS.map((category) => (
-            <option key={category} value={category}>
-              {getCategoryLabel(category)}
-            </option>
-          ))}
-        </select>
-        <input
-          ref={uploadInputRef}
-          type="file"
-          accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
-          onChange={(event) => setUploadFile(event.currentTarget.files?.[0] ?? null)}
-          className="rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white md:col-span-2"
-        />
-        <button
-          type="submit"
-          disabled={uploading}
-          className="rounded-xl bg-gradient-to-r from-emerald-300 to-cyan-300 px-4 py-2 text-sm font-semibold text-zinc-950 disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {uploading ? "업로드 중..." : "업로드"}
-        </button>
-      </form>
+    <section className="admin-panel relative overflow-hidden rounded-[24px] p-5 md:p-6">
+      <div className="flex flex-col gap-5 border-b pb-5" style={{ borderColor: "var(--hub-border)" }}>
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p
+              className="text-[10px] font-semibold uppercase tracking-[0.18em] [font-family:var(--font-space-grotesk),sans-serif]"
+              style={{ color: "var(--hub-accent)" }}
+            >
+              파일 보급선
+            </p>
+            <h2
+              className="mt-2 text-2xl font-black uppercase tracking-tight [font-family:var(--font-space-grotesk),sans-serif]"
+              style={{ color: "var(--hub-text)" }}
+            >
+              파일 관리
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--hub-muted)" }}>
+              공용 이미지와 자료 파일을 업로드하고, 카테고리별로 빠르게 분류하며, 삭제 대기 파일까지
+              함께 관리하는 구역입니다.
+            </p>
+          </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap gap-2">
+            <span
+              className="inline-flex rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]"
+              style={{
+                borderColor: "var(--hub-outline)",
+                backgroundColor: "var(--hub-accent-soft)",
+                color: "var(--hub-accent)",
+              }}
+            >
+              활성 {activeAssets.length}
+            </span>
+            <span
+              className="inline-flex rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]"
+              style={{ borderColor: "var(--hub-border)", color: "var(--hub-muted)" }}
+            >
+              휴지통 {trashedAssets.length}
+            </span>
+          </div>
+        </div>
+
+        <form onSubmit={handleUpload} className="grid gap-3 xl:grid-cols-[180px_minmax(0,1fr)_auto]">
+          <select
+            value={uploadCategory}
+            onChange={(event) => setUploadCategory(event.target.value as AssetCategory)}
+            aria-label="업로드 카테고리"
+            className="rounded-2xl px-3 py-3 text-sm outline-none"
+          >
+            {CATEGORY_OPTIONS.map((category) => (
+              <option key={category} value={category}>
+                {getCategoryLabel(category)}
+              </option>
+            ))}
+          </select>
+          <input
+            ref={uploadInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+            onChange={(event) => setUploadFile(event.currentTarget.files?.[0] ?? null)}
+            className="rounded-2xl px-3 py-2 text-sm"
+          />
+          <button
+            type="submit"
+            disabled={uploading}
+            className="admin-link-chip admin-link-chip--primary admin-button-keep h-fit disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {uploading ? "업로드 중" : "파일 업로드"}
+          </button>
+        </form>
+      </div>
+
+      <div className="mt-5 flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={() => setAssetScope("active")}
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+          className="rounded-full border px-3 py-1 text-xs font-semibold transition"
+          style={
             assetScope === "active"
-              ? "bg-emerald-300 text-zinc-950"
-              : "border border-white/25 text-zinc-100"
-          }`}
+              ? {
+                  borderColor: "var(--hub-outline)",
+                  backgroundColor: "var(--hub-accent-soft)",
+                  color: "var(--hub-accent)",
+                }
+              : { borderColor: "var(--hub-border)", color: "var(--hub-muted)" }
+          }
         >
           활성 파일 ({activeAssets.length})
         </button>
         <button
           type="button"
           onClick={() => setAssetScope("trash")}
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+          className="rounded-full border px-3 py-1 text-xs font-semibold transition"
+          style={
             assetScope === "trash"
-              ? "bg-amber-300 text-zinc-950"
-              : "border border-white/25 text-zinc-100"
-          }`}
+              ? {
+                  borderColor: "var(--hub-danger-border)",
+                  backgroundColor: "var(--hub-danger-bg)",
+                  color: "var(--hub-danger-text)",
+                }
+              : { borderColor: "var(--hub-border)", color: "var(--hub-muted)" }
+          }
         >
           휴지통 ({trashedAssets.length})
         </button>
         <select
           value={categoryFilter}
           onChange={(event) => setCategoryFilter(event.target.value as AssetCategory | "ALL")}
-          className="rounded-full border border-white/20 bg-black/35 px-3 py-1 text-xs text-zinc-100 outline-none"
+          className="rounded-full px-3 py-1 text-xs outline-none"
+          aria-label="카테고리 필터"
         >
           <option value="ALL">전체</option>
           {CATEGORY_OPTIONS.map((category) => (
@@ -224,57 +277,99 @@ export function AssetManager({
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="파일명 검색"
-          className="rounded-full border border-white/20 bg-black/35 px-3 py-1 text-xs text-zinc-100 outline-none"
+          className="rounded-full px-3 py-1 text-xs outline-none"
         />
       </div>
 
-      <div className="mt-4 space-y-2">
+      <div className="mt-5 space-y-3">
         {visibleAssets.length === 0 ? (
-          <p className="rounded-xl border border-white/15 bg-black/35 px-4 py-3 text-sm text-zinc-300">
-            표시할 파일이 없습니다.
+          <p
+            className="rounded-2xl border px-4 py-4 text-sm"
+            style={{
+              borderColor: "var(--hub-border)",
+              backgroundColor: "color-mix(in srgb, var(--hub-surface-alt) 76%, transparent)",
+              color: "var(--hub-muted)",
+            }}
+          >
+            현재 조건에 맞는 파일이 없습니다.
           </p>
         ) : (
           visibleAssets.map((asset) => (
-            <article key={asset.id} className="rounded-xl border border-white/15 bg-black/35 p-3">
-              <p className="text-sm font-semibold text-white">{asset.originalName}</p>
-              <p className="text-xs text-zinc-300">
-                {getCategoryLabel(asset.category)} | {(asset.size / 1024).toFixed(1)} KB
-              </p>
-              <p className="mt-1 text-xs text-zinc-400">{asset.publicUrl}</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => copyPublicUrl(asset.publicUrl)}
-                  className="rounded-full border border-cyan-300/50 px-3 py-1 text-xs font-semibold text-cyan-100"
-                >
-                  URL 복사
-                </button>
-                {assetScope === "active" ? (
+            <article
+              key={asset.id}
+              className="rounded-2xl border p-4"
+              style={{
+                borderColor: "var(--hub-border)",
+                backgroundColor: "color-mix(in srgb, var(--hub-surface-alt) 72%, transparent)",
+              }}
+            >
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-sm font-semibold" style={{ color: "var(--hub-text)" }}>
+                      {asset.originalName}
+                    </p>
+                    <span
+                      className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]"
+                      style={{
+                        borderColor: "var(--hub-outline)",
+                        backgroundColor: "var(--hub-accent-soft)",
+                        color: "var(--hub-accent)",
+                      }}
+                    >
+                      {getCategoryLabel(asset.category)}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs" style={{ color: "var(--hub-muted)" }}>
+                    {(asset.size / 1024).toFixed(1)} KB
+                  </p>
+                  <p className="mt-2 break-all text-xs" style={{ color: "var(--hub-muted)" }}>
+                    {asset.publicUrl}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => trashAsset(asset.id)}
-                    className="rounded-full border border-amber-300/50 px-3 py-1 text-xs font-semibold text-amber-100"
+                    onClick={() => copyPublicUrl(asset.publicUrl)}
+                    className="admin-button-keep rounded-full border px-3 py-1 text-xs font-semibold"
+                    style={{ borderColor: "var(--hub-outline)", color: "var(--hub-accent)" }}
                   >
-                    휴지통 이동
+                    URL 복사
                   </button>
-                ) : (
-                  <>
+                  {assetScope === "active" ? (
                     <button
                       type="button"
-                      onClick={() => restoreAsset(asset.id)}
-                      className="rounded-full border border-emerald-300/50 px-3 py-1 text-xs font-semibold text-emerald-100"
+                      onClick={() => trashAsset(asset.id)}
+                      className="rounded-full border px-3 py-1 text-xs font-semibold"
+                      style={{ borderColor: "var(--hub-border)", color: "var(--hub-muted)" }}
                     >
-                      복구
+                      휴지통 이동
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => hardDeleteAsset(asset.id)}
-                      className="rounded-full border border-rose-300/50 px-3 py-1 text-xs font-semibold text-rose-100"
-                    >
-                      영구 삭제
-                    </button>
-                  </>
-                )}
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => restoreAsset(asset.id)}
+                        className="rounded-full border px-3 py-1 text-xs font-semibold"
+                        style={{ borderColor: "var(--hub-outline)", color: "var(--hub-accent)" }}
+                      >
+                        복구
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => hardDeleteAsset(asset.id)}
+                        className="rounded-full border px-3 py-1 text-xs font-semibold"
+                        style={{
+                          borderColor: "var(--hub-danger-border)",
+                          color: "var(--hub-danger-text)",
+                        }}
+                      >
+                        영구 삭제
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </article>
           ))

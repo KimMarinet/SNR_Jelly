@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { ensureSystemBoards } from "@/lib/system-boards";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
+  await ensureSystemBoards();
 
   const board = await prisma.board.findUnique({
     where: { slug },

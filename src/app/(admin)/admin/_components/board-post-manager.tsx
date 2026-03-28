@@ -106,6 +106,10 @@ function formatDate(value: string): string {
   }
 }
 
+function isHardDeleteLocked(board: AdminBoard): boolean {
+  return board.isSystemProtected;
+}
+
 export function BoardPostManager({
   initialActiveBoards,
   initialInactiveBoards,
@@ -169,8 +173,24 @@ export function BoardPostManager({
     });
   }, [currentBoards, normalizedBoardSearchQuery]);
   const boardListPageSize = 3;
+  const boardListPaginationSize = 5;
   const currentBoardListPage = boardListPageByTab[boardTab];
   const boardListTotalPages = Math.max(1, Math.ceil(filteredBoards.length / boardListPageSize));
+  const boardListPageWindowStart = Math.max(
+    1,
+    Math.min(
+      currentBoardListPage - Math.floor(boardListPaginationSize / 2),
+      boardListTotalPages - boardListPaginationSize + 1,
+    ),
+  );
+  const boardListPageWindowEnd = Math.min(
+    boardListTotalPages,
+    boardListPageWindowStart + boardListPaginationSize - 1,
+  );
+  const boardListPageNumbers = Array.from(
+    { length: Math.max(0, boardListPageWindowEnd - boardListPageWindowStart + 1) },
+    (_, index) => boardListPageWindowStart + index,
+  );
   const visibleBoards = filteredBoards.slice(
     (currentBoardListPage - 1) * boardListPageSize,
     currentBoardListPage * boardListPageSize,
@@ -409,6 +429,11 @@ export function BoardPostManager({
   }
 
   function hardDeleteBoard(board: AdminBoard) {
+    if (isHardDeleteLocked(board)) {
+      onStatus("공지 사항과 전략글 게시판은 시스템 보호 게시판이라 삭제할 수 없습니다.");
+      return;
+    }
+
     setConfirmModal({ type: "hard-delete", board, inputValue: "" });
   }
 
@@ -591,7 +616,7 @@ export function BoardPostManager({
   }
 
   return (
-    <div className="relative space-y-6">
+    <div className="admin-board-manager relative space-y-6">
       {confirmModal !== null && (
         <ConfirmDialog
           modal={confirmModal}
@@ -636,13 +661,19 @@ export function BoardPostManager({
         />
       )}
 
-      <section className="rounded-2xl border border-emerald-400/20 bg-emerald-400/5">
-        <div className="flex items-center gap-3 border-b border-emerald-400/15 px-6 py-4">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-400/15 text-sm text-emerald-300">
+      <section className="admin-panel relative overflow-hidden rounded-[24px]">
+        <div className="flex items-center gap-3 border-b px-6 py-4" style={{ borderColor: "var(--hub-border)" }}>
+          <span
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-sm"
+            style={{ backgroundColor: "var(--hub-accent-soft)", color: "var(--hub-accent)" }}
+          >
             +
           </span>
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400">
+            <p
+              className="text-[10px] font-semibold uppercase tracking-widest [font-family:var(--font-space-grotesk),sans-serif]"
+              style={{ color: "var(--hub-accent)" }}
+            >
               New Board
             </p>
             <h2 className="text-sm font-semibold text-white">게시판 생성</h2>
@@ -709,15 +740,18 @@ export function BoardPostManager({
         </form>
       </section>
 
-      <section className="rounded-2xl border border-white/10 bg-black/25">
-        <div className="border-b border-white/10 px-6 py-4">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+      <section className="admin-panel relative overflow-hidden rounded-[24px]">
+        <div className="border-b px-6 py-4" style={{ borderColor: "var(--hub-border)" }}>
+          <p
+            className="text-[10px] font-semibold uppercase tracking-widest [font-family:var(--font-space-grotesk),sans-serif]"
+            style={{ color: "var(--hub-accent)" }}
+          >
             Board Management
           </p>
           <h2 className="text-sm font-semibold text-white">게시판 리스트</h2>
         </div>
 
-        <div className="flex border-b border-white/10 px-6">
+        <div className="flex border-b px-6" style={{ borderColor: "var(--hub-border)" }}>
           <button
             type="button"
             onClick={() => setBoardTab("active")}
@@ -741,7 +775,7 @@ export function BoardPostManager({
         </div>
 
         <div className="grid gap-6 p-5 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-0">
             <button
               type="button"
               onClick={() =>
@@ -751,15 +785,14 @@ export function BoardPostManager({
                 }))
               }
               disabled={currentBoardListPage === 1}
-              className="h-12 w-12 shrink-0 rounded-full border border-white/20 bg-black/80 text-lg font-bold text-slate-200 transition hover:bg-white/15 disabled:opacity-30"
+              className="-mr-3 h-14 w-12 shrink-0 rounded-none border-0 bg-transparent text-[1.7rem] font-bold text-slate-400 transition hover:bg-transparent hover:text-white disabled:opacity-20"
               aria-label="이전 게시판 목록"
             >
               &lsaquo;
             </button>
 
-            <aside className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/25 p-3">
+            <aside className="min-w-0 flex-1 rounded-xl bg-black/25 px-2 py-3">
               <div className="mb-3 space-y-2">
-                <p className="text-xs font-semibold text-slate-400">게시판 목록</p>
                 <div className="flex items-center gap-2">
                   <input
                     type="search"
@@ -827,6 +860,11 @@ export function BoardPostManager({
                         <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-slate-300">
                           글 {board._count?.posts ?? 0}
                         </span>
+                        {board.isSystemProtected && (
+                          <span className="rounded-full border border-cyan-300/40 bg-cyan-400/10 px-2 py-0.5 text-[10px] text-cyan-100">
+                            삭제 불가
+                          </span>
+                        )}
                         {board.isAdminWriteOnly && (
                           <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] text-amber-200">
                             관리자 전용 작성
@@ -837,6 +875,33 @@ export function BoardPostManager({
                   );
                 })}
               </div>
+
+              {boardListTotalPages > 1 && (
+                <div className="mt-3 flex items-center justify-center gap-1.5">
+                  {boardListPageNumbers.map((pageNumber) => (
+                    <button
+                      key={`${boardTab}-page-${pageNumber}`}
+                      type="button"
+                      onClick={() =>
+                        setBoardListPageByTab((prev) => ({
+                          ...prev,
+                          [boardTab]: pageNumber,
+                        }))
+                      }
+                      className={[
+                        "admin-pagination-button inline-flex h-8 min-w-8 items-center justify-center px-2 text-[11px] font-semibold transition",
+                        pageNumber === currentBoardListPage
+                          ? "admin-pagination-button--active"
+                          : "",
+                      ].join(" ")}
+                      aria-label={`페이지 ${pageNumber} 이동`}
+                      aria-current={pageNumber === currentBoardListPage ? "page" : undefined}
+                    >
+                      {pageNumber}
+                    </button>
+                  ))}
+                </div>
+              )}
             </aside>
 
             <button
@@ -848,7 +913,7 @@ export function BoardPostManager({
                 }))
               }
               disabled={currentBoardListPage === boardListTotalPages}
-              className="h-12 w-12 shrink-0 rounded-full border border-white/20 bg-black/80 text-lg font-bold text-slate-200 transition hover:bg-white/15 disabled:opacity-30"
+              className="-ml-3 h-14 w-12 shrink-0 rounded-none border-0 bg-transparent text-[1.7rem] font-bold text-slate-400 transition hover:bg-transparent hover:text-white disabled:opacity-20"
               aria-label="다음 게시판 목록"
             >
               &rsaquo;
@@ -868,6 +933,11 @@ export function BoardPostManager({
                       Selected Board
                     </p>
                     <h3 className="text-lg font-semibold text-white">{selectedBoard.title}</h3>
+                    {selectedBoard.isSystemProtected && (
+                      <p className="mt-1 text-xs text-cyan-100">
+                        시스템 보호 게시판입니다. 순서 조정과 게시글 관리는 가능하지만 삭제는 차단됩니다.
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -989,14 +1059,20 @@ export function BoardPostManager({
                           >
                             {mutatingBoardId === selectedBoard.id ? "처리 중.." : "복구"}
                           </button>
-                          <button
-                            type="button"
-                            disabled={mutatingBoardId === selectedBoard.id}
-                            onClick={() => hardDeleteBoard(selectedBoard)}
-                            className="rounded-full border border-rose-300/50 px-3 py-1 text-xs font-semibold text-rose-100 transition hover:bg-rose-400/10 disabled:opacity-60"
-                          >
-                            {mutatingBoardId === selectedBoard.id ? "처리 중.." : "최종 삭제"}
-                          </button>
+                          {selectedBoard.isSystemProtected ? (
+                            <span className="rounded-full border border-cyan-300/40 px-3 py-1 text-xs font-semibold text-cyan-100">
+                              시스템 보호로 삭제 불가
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={mutatingBoardId === selectedBoard.id}
+                              onClick={() => hardDeleteBoard(selectedBoard)}
+                              className="rounded-full border border-rose-300/50 px-3 py-1 text-xs font-semibold text-rose-100 transition hover:bg-rose-400/10 disabled:opacity-60"
+                            >
+                              {mutatingBoardId === selectedBoard.id ? "처리 중.." : "최종 삭제"}
+                            </button>
+                          )}
                         </>
                       )}
                     </div>
@@ -1090,10 +1166,13 @@ function PostManagerModal({
 
   return (
     <div className="absolute inset-0 z-[90] bg-black/70 backdrop-blur-sm">
-      <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#090d12]">
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+      <div className="admin-panel flex h-full w-full flex-col overflow-hidden rounded-[24px]">
+        <div className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: "var(--hub-border)" }}>
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-cyan-400">
+            <p
+              className="text-[10px] font-semibold uppercase tracking-widest [font-family:var(--font-space-grotesk),sans-serif]"
+              style={{ color: "var(--hub-accent)" }}
+            >
               Post Management
             </p>
             <h3 className="text-lg font-semibold text-white">
@@ -1109,7 +1188,7 @@ function PostManagerModal({
           </button>
         </div>
 
-        <div className="flex items-center gap-2 border-b border-white/10 px-6 py-3">
+        <div className="flex items-center gap-2 border-b px-6 py-3" style={{ borderColor: "var(--hub-border)" }}>
           <button
             type="button"
             onClick={() => onRefreshPosts(board.id, "active")}
@@ -1134,7 +1213,7 @@ function PostManagerModal({
           </button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 border-b border-white/10 px-6 py-3">
+        <div className="flex flex-wrap items-center gap-1.5 border-b px-6 py-3" style={{ borderColor: "var(--hub-border)" }}>
           <label className="mr-2 flex items-center gap-1 text-[11px] text-slate-300">
             <input
               type="checkbox"
@@ -1426,11 +1505,11 @@ function ConfirmDialog({
       onClick={onCancel}
     >
       <div
-        className="relative mx-4 w-full max-w-md overflow-hidden rounded-2xl border bg-[#0d1117] shadow-2xl"
+        className="relative mx-4 w-full max-w-md overflow-hidden rounded-[24px] border shadow-2xl"
         style={{
-          borderColor: isHardDelete
-            ? "rgba(248,113,113,0.3)"
-            : "rgba(251,191,36,0.3)",
+          borderColor: isHardDelete ? "var(--hub-danger-border)" : "var(--hub-outline)",
+          background:
+            "linear-gradient(180deg, color-mix(in srgb, var(--hub-surface) 94%, white 6%) 0%, var(--hub-surface) 100%)",
         }}
         onClick={(event) => event.stopPropagation()}
       >

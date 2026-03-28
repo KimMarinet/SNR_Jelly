@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { PostEditorForm } from "@/components/post/post-editor-form";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ensureSystemBoards } from "@/lib/system-boards";
 
 type BoardPostCreatePageProps = {
   params: Promise<{ slug: string }>;
@@ -10,6 +11,7 @@ type BoardPostCreatePageProps = {
 
 export default async function BoardPostCreatePage({ params }: BoardPostCreatePageProps) {
   const { slug } = await params;
+  await ensureSystemBoards();
   const session = await getServerSession(authOptions);
   const isAdmin = session?.user?.role === "ADMIN";
   if (!session?.user?.id) {

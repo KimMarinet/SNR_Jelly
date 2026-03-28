@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { PostEditorForm } from "@/components/post/post-editor-form";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ensureSystemBoards } from "@/lib/system-boards";
 
 type BoardPostEditPageProps = {
   params: Promise<{ slug: string; postId: string }>;
@@ -19,6 +20,8 @@ export default async function BoardPostEditPage({ params }: BoardPostEditPagePro
   if (!postId) {
     notFound();
   }
+
+  await ensureSystemBoards();
 
   const session = await getServerSession(authOptions);
   const sessionUserId = Number(session?.user?.id ?? 0);

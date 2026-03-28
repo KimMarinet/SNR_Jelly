@@ -3,6 +3,11 @@ import { Prisma } from "@/generated/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/route-auth";
+import {
+  attachSystemProtection,
+  ensureSystemBoards,
+  isBoardSystemProtected,
+} from "@/lib/system-boards";
 
 type UpdateBoardBody = {
   action?: "deactivate" | "restore";
@@ -43,6 +48,8 @@ export async function PATCH(
     return unauthorizedResponse();
   }
 
+  await ensureSystemBoards();
+
   const { id: rawId } = await params;
   const id = parseId(rawId);
   if (!id) {
@@ -75,13 +82,14 @@ export async function PATCH(
         _count: { select: { posts: true } },
       },
     });
+    const [protectedBoard] = await attachSystemProtection([updatedBoard]);
 
     revalidateTag("board-navigation", "max");
     revalidatePath("/lounge");
     revalidatePath(`/board/${updatedBoard.slug}`);
 
     return NextResponse.json({
-      board: updatedBoard,
+      board: protectedBoard,
       message: body.action === "restore" ? "Board restored." : "Board deactivated.",
     });
   }
@@ -138,6 +146,7 @@ export async function PATCH(
         _count: { select: { posts: true } },
       },
     });
+    const [protectedBoard] = await attachSystemProtection([updatedBoard]);
 
     revalidateTag("board-navigation", "max");
     revalidatePath("/lounge");
@@ -146,7 +155,7 @@ export async function PATCH(
       revalidatePath(`/board/${updatedBoard.slug}`);
     }
 
-    return NextResponse.json({ board: updatedBoard, message: "Board updated." });
+    return NextResponse.json({ board: protectedBoard, message: "Board updated." });
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -170,6 +179,8 @@ export async function DELETE(
     return unauthorizedResponse();
   }
 
+  await ensureSystemBoards();
+
   const { id: rawId } = await params;
   const id = parseId(rawId);
   if (!id) {
@@ -186,6 +197,13 @@ export async function DELETE(
 
   if (!board) {
     return NextResponse.json({ message: "Board not found." }, { status: 404 });
+  }
+
+  if (await isBoardSystemProtected(board.id)) {
+    return NextResponse.json(
+      { message: "System protected boards cannot be deleted." },
+      { status: 403 },
+    );
   }
 
   if (board.isActive) {

@@ -8,15 +8,13 @@ export default function LoungeLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="layout-shell min-h-screen">
-      <Header />
-      <div className="mx-auto flex w-full max-w-[1400px] flex-1 gap-4 px-4 py-5 md:px-6">
-        <SideNavigation />
-        <main className="theme-panel flex-1 rounded-2xl border p-4 backdrop-blur-sm md:p-6">
-          {children}
-        </main>
+    <div className="layout-shell hub-shell min-h-screen">
+      <Header variant="hub" />
+      <div className="mx-auto flex w-full max-w-[1440px] flex-1 gap-5 px-4 py-5 md:px-6">
+        <SideNavigation variant="hub" />
+        <main className="hub-panel flex-1 border p-4 md:p-6">{children}</main>
       </div>
-      <Footer />
+      <Footer variant="hub" />
     </div>
   );
 }

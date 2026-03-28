@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { ensureSystemBoards } from "@/lib/system-boards";
 
 export type BoardNavigationItem = {
   slug: string;
@@ -35,6 +36,8 @@ const MOCK_BOARD_ITEMS: BoardNavigationItem[] = [
 
 const getBoardItemsFromDb = unstable_cache(
   async (): Promise<BoardNavigationItem[]> => {
+    await ensureSystemBoards();
+
     return prisma.board.findMany({
       where: { isActive: true },
       orderBy: [{ order: "asc" }, { id: "asc" }],
