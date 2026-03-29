@@ -361,12 +361,12 @@ export default async function LoungeHomePage() {
                   className="mb-8 line-clamp-3 text-sm leading-relaxed"
                   style={{ color: previewImage ? "var(--hub-image-text-soft)" : "var(--hub-muted)" }}
                 >
-                  {previewText || "蹂몃Ц 誘몃━蹂닿린媛 ?놁뒿?덈떎."}
+                  {previewText || "\uBCF8\uBB38 \uBBF8\uB9AC\uBCF4\uAE30\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4."}
                 </p>
 
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[10px] uppercase tracking-[0.12em]" style={{ color: previewImage ? "var(--hub-image-text-soft)" : "var(--hub-muted)" }}>
-                    {post.board.title} 쨌 議고쉶 {post.viewCount.toLocaleString()}
+                    {post.board.title} / {"\uC870\uD68C"} {post.viewCount.toLocaleString()}
                   </div>
                   <div
                     className="flex items-center gap-1 text-[10px] uppercase tracking-widest opacity-0 transition-opacity group-hover:opacity-100 [font-family:var(--font-space-grotesk),sans-serif]"
@@ -430,7 +430,7 @@ export default async function LoungeHomePage() {
                   {leadPost.title}
                 </Link>
                 <p className="mt-3 text-xs uppercase tracking-wider" style={{ color: leadPostImage ? "var(--hub-image-text-soft)" : "var(--hub-muted)" }}>
-                  {leadPost.board.title} 쨌 議고쉶 {leadPost.viewCount.toLocaleString()} 쨌 {formatDate(leadPost.createdAt)}
+                  {leadPost.board.title} / {"\uC870\uD68C"} {leadPost.viewCount.toLocaleString()} / {formatDate(leadPost.createdAt)}
                 </p>
               </>
             ) : (
@@ -465,7 +465,7 @@ export default async function LoungeHomePage() {
                       color: "var(--hub-muted)",
                     }}
                   >
-                    <span style={{ color: "var(--hub-text)" }}>{post.board.title}</span> 쨌 {post.title}
+                    <span style={{ color: "var(--hub-text)" }}>{post.board.title}</span> / {post.title}
                   </Link>
                 ))
               )}

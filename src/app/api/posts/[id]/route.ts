@@ -2,11 +2,13 @@ import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { postCombinationSchema } from "@/lib/post-combination";
 import { getCurrentUserAuth } from "@/lib/session";
 
 const updatePostSchema = z.object({
   title: z.string().trim().min(2).max(120),
   content: z.string().trim(),
+  combinationData: postCombinationSchema.optional(),
   isPinned: z.boolean().optional(),
 });
 
@@ -61,6 +63,7 @@ export async function PATCH(
     data: {
       title: parsed.data.title,
       content: parsed.data.content,
+      combinationData: parsed.data.combinationData ?? undefined,
       isPublished: true,
       ...(user.role === "ADMIN" && parsed.data.isPinned !== undefined
         ? { isPinned: parsed.data.isPinned }

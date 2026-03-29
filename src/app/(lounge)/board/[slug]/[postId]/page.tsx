@@ -1,9 +1,11 @@
 ﻿import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
+import { PostCombinationDisplay } from "@/components/post/post-combination-display";
 import { PostCommentSection } from "@/components/post/post-comment-section";
 import { PostReactionBar } from "@/components/post/post-reaction-bar";
 import { authOptions } from "@/lib/auth";
+import { normalizePostCombinationData } from "@/lib/post-combination";
 import { prisma } from "@/lib/prisma";
 import { ensureSystemBoards } from "@/lib/system-boards";
 
@@ -53,6 +55,7 @@ export default async function BoardPostDetailPage({ params }: BoardPostDetailPag
       authorId: true,
       title: true,
       content: true,
+      combinationData: true,
       isPublished: true,
       likeCount: true,
       viewCount: true,
@@ -83,6 +86,7 @@ export default async function BoardPostDetailPage({ params }: BoardPostDetailPag
 
   let effectiveViewCount = post.viewCount;
   let initiallyLiked = false;
+  const combinationData = normalizePostCombinationData(post.combinationData);
 
   if (currentUserId) {
     const result = await prisma.$transaction(async (tx) => {
@@ -199,6 +203,8 @@ export default async function BoardPostDetailPage({ params }: BoardPostDetailPag
           className="prose prose-invert mt-6 max-w-none text-zinc-100"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
+
+        <PostCombinationDisplay data={combinationData} />
 
         <div className="mt-8 flex flex-wrap gap-2">
           <Link

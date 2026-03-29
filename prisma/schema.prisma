@@ -80,6 +80,7 @@ model Post {
   authorId    Int
   title       String
   content     String    @db.LongText
+  combinationData Json?
   isPublished Boolean   @default(true)
   isPinned    Boolean   @default(false)
   likeCount   Int       @default(0)

@@ -2,6 +2,7 @@
 import { getServerSession } from "next-auth";
 import { PostEditorForm } from "@/components/post/post-editor-form";
 import { authOptions } from "@/lib/auth";
+import { normalizePostCombinationData } from "@/lib/post-combination";
 import { prisma } from "@/lib/prisma";
 import { ensureSystemBoards } from "@/lib/system-boards";
 
@@ -51,6 +52,7 @@ export default async function BoardPostEditPage({ params }: BoardPostEditPagePro
       authorId: true,
       title: true,
       content: true,
+      combinationData: true,
       isPinned: true,
     },
   });
@@ -63,6 +65,21 @@ export default async function BoardPostEditPage({ params }: BoardPostEditPagePro
   if (!canEdit) {
     redirect(`/board/${slug}/${post.id}`);
   }
+
+  const characters = await prisma.character.findMany({
+    orderBy: [{ name: "asc" }, { id: "asc" }],
+    select: {
+      id: true,
+      name: true,
+      portraitUrl: true,
+      skillOneName: true,
+      skillOneImageUrl: true,
+      skillTwoName: true,
+      skillTwoImageUrl: true,
+      passiveName: true,
+      passiveImageUrl: true,
+    },
+  });
 
   return (
     <div className="space-y-5">
@@ -81,6 +98,8 @@ export default async function BoardPostEditPage({ params }: BoardPostEditPagePro
           initialContent={post.content}
           isAdmin={isAdmin}
           initialIsPinned={post.isPinned}
+          availableCharacters={characters}
+          initialCombinationData={normalizePostCombinationData(post.combinationData)}
         />
       </section>
     </div>

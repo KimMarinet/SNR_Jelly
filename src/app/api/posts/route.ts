@@ -2,12 +2,14 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { postCombinationSchema } from "@/lib/post-combination";
 import { getCurrentUserAuth } from "@/lib/session";
 
 const createPostSchema = z.object({
   boardId: z.number().int().positive(),
   title: z.string().trim().min(2).max(120),
   content: z.string().trim(),
+  combinationData: postCombinationSchema.optional(),
   isPinned: z.boolean().optional(),
 });
 
@@ -44,6 +46,7 @@ export async function POST(request: Request) {
       authorId: user.id,
       title: parsed.data.title,
       content: parsed.data.content,
+      combinationData: parsed.data.combinationData ?? undefined,
       isPublished: true,
       isPinned: user.role === "ADMIN" ? (parsed.data.isPinned ?? false) : false,
     },

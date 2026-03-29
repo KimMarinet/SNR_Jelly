@@ -4,6 +4,12 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { Editor as ToastEditorType } from "@toast-ui/react-editor";
+import { PostCombinationEditor } from "@/components/post/post-combination-editor";
+import {
+  normalizePostCombinationData,
+  type PostCombinationData,
+  type SelectableCharacter,
+} from "@/lib/post-combination";
 
 const ToastEditor = dynamic(
   () => import("@toast-ui/react-editor").then((mod) => mod.Editor),
@@ -19,6 +25,8 @@ type PostEditorFormProps = {
   initialContent?: string;
   isAdmin?: boolean;
   initialIsPinned?: boolean;
+  availableCharacters: SelectableCharacter[];
+  initialCombinationData?: PostCombinationData | null;
 };
 
 export function PostEditorForm({
@@ -30,11 +38,21 @@ export function PostEditorForm({
   initialContent = "",
   isAdmin = false,
   initialIsPinned = false,
+  availableCharacters,
+  initialCombinationData,
 }: PostEditorFormProps) {
   const router = useRouter();
   const editorRef = useRef<ToastEditorType>(null);
+  const normalizedInitialCombinationData = normalizePostCombinationData(initialCombinationData);
   const [title, setTitle] = useState(initialTitle);
   const [isPinned, setIsPinned] = useState(initialIsPinned);
+  const [isCombinationOpen, setIsCombinationOpen] = useState(
+    normalizedInitialCombinationData.characters.length > 0 ||
+      normalizedInitialCombinationData.skills.length > 0,
+  );
+  const [combinationData, setCombinationData] = useState<PostCombinationData>(
+    normalizedInitialCombinationData,
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const editorInitialValue = mode === "create" ? " " : initialContent || " ";
@@ -48,9 +66,11 @@ export function PostEditorForm({
   }, [mode, submitting]);
 
   useEffect(() => {
+    const editor = editorRef.current;
+
     return () => {
       try {
-        editorRef.current?.getInstance()?.destroy();
+        editor?.getInstance()?.destroy();
       } catch {
         // no-op
       }
@@ -91,6 +111,7 @@ export function PostEditorForm({
         boardId,
         title,
         content,
+        combinationData,
         ...(isAdmin && mode === "create" ? { isPinned } : {}),
       };
 
@@ -105,6 +126,7 @@ export function PostEditorForm({
               : JSON.stringify({
                   title: payload.title,
                   content: payload.content,
+                  combinationData: payload.combinationData,
                   ...(isAdmin ? { isPinned } : {}),
                 }),
         },
@@ -140,6 +162,14 @@ export function PostEditorForm({
         maxLength={120}
         placeholder="제목"
         className="w-full rounded-xl border border-white/20 bg-black/35 px-3 py-2 text-sm text-white outline-none"
+      />
+
+      <PostCombinationEditor
+        isOpen={isCombinationOpen}
+        onToggle={() => setIsCombinationOpen((current) => !current)}
+        characters={availableCharacters}
+        value={combinationData}
+        onChange={setCombinationData}
       />
 
       <div className="post-editor-shell rounded-xl border border-white/15 bg-black/25 p-2">

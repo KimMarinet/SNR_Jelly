@@ -2,6 +2,7 @@
 import { getServerSession } from "next-auth";
 import { PostEditorForm } from "@/components/post/post-editor-form";
 import { authOptions } from "@/lib/auth";
+import { normalizePostCombinationData } from "@/lib/post-combination";
 import { prisma } from "@/lib/prisma";
 import { ensureSystemBoards } from "@/lib/system-boards";
 
@@ -31,6 +32,21 @@ export default async function BoardPostCreatePage({ params }: BoardPostCreatePag
     redirect(`/board/${slug}`);
   }
 
+  const characters = await prisma.character.findMany({
+    orderBy: [{ name: "asc" }, { id: "asc" }],
+    select: {
+      id: true,
+      name: true,
+      portraitUrl: true,
+      skillOneName: true,
+      skillOneImageUrl: true,
+      skillTwoName: true,
+      skillTwoImageUrl: true,
+      passiveName: true,
+      passiveImageUrl: true,
+    },
+  });
+
   return (
     <div className="space-y-5">
       <header className="rounded-2xl border border-white/15 bg-white/5 p-6">
@@ -39,7 +55,14 @@ export default async function BoardPostCreatePage({ params }: BoardPostCreatePag
       </header>
 
       <section className="rounded-2xl border border-white/15 bg-black/30 p-6">
-        <PostEditorForm boardId={board.id} boardSlug={board.slug} mode="create" isAdmin={isAdmin} />
+        <PostEditorForm
+          boardId={board.id}
+          boardSlug={board.slug}
+          mode="create"
+          isAdmin={isAdmin}
+          availableCharacters={characters}
+          initialCombinationData={normalizePostCombinationData(null)}
+        />
       </section>
     </div>
   );
