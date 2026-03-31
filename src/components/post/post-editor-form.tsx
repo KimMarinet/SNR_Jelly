@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useMemo, useRef, useState } from "react";
 import type { Editor as ToastEditorType } from "@toast-ui/react-editor";
 import { PostCombinationEditor } from "@/components/post/post-combination-editor";
 import {
@@ -64,18 +64,6 @@ export function PostEditorForm({
     }
     return mode === "create" ? "게시글 등록" : "게시글 수정";
   }, [mode, submitting]);
-
-  useEffect(() => {
-    const editor = editorRef.current;
-
-    return () => {
-      try {
-        editor?.getInstance()?.destroy();
-      } catch {
-        // no-op
-      }
-    };
-  }, []);
 
   async function uploadEditorImage(blob: Blob): Promise<string> {
     const formData = new FormData();

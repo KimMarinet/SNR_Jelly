@@ -66,7 +66,7 @@ export function PostReactionBar({
         조회수 {initialViewCount}
       </span>
       {!canLike ? <span className="text-xs text-zinc-400">로그인 후 좋아요 가능</span> : null}
-      {error ? <span className="text-xs text-rose-300">{error}</span> : null}
+      {error ? <span className="text-[11px] font-medium text-rose-300">{error}</span> : null}
     </div>
   );
 }

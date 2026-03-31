@@ -1,8 +1,10 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { PaginationControls } from "@/components/pagination/pagination";
 import { readJson } from "./http";
 import type { AdminBoard, AdminPost } from "./types";
+import { buildPaginationState } from "@/lib/pagination";
 
 type PostScope = "active" | "trash";
 
@@ -39,6 +41,11 @@ type SelectedBoardByTab = {
   active: number | null;
   inactive: number | null;
 };
+
+const BOARD_LIST_PAGE_SIZE = 3;
+const BOARD_LIST_WINDOW_SIZE = 5;
+const POST_PAGE_SIZE = 6;
+const POST_PAGE_WINDOW_SIZE = 10;
 
 type PostManagerModalProps = {
   board: AdminBoard;
@@ -172,31 +179,22 @@ export function BoardPostManager({
       );
     });
   }, [currentBoards, normalizedBoardSearchQuery]);
-  const boardListPageSize = 3;
-  const boardListPaginationSize = 5;
-  const currentBoardListPage = boardListPageByTab[boardTab];
-  const boardListTotalPages = Math.max(1, Math.ceil(filteredBoards.length / boardListPageSize));
-  const boardListPageWindowStart = Math.max(
-    1,
-    Math.min(
-      currentBoardListPage - Math.floor(boardListPaginationSize / 2),
-      boardListTotalPages - boardListPaginationSize + 1,
-    ),
-  );
-  const boardListPageWindowEnd = Math.min(
-    boardListTotalPages,
-    boardListPageWindowStart + boardListPaginationSize - 1,
-  );
-  const boardListPageNumbers = Array.from(
-    { length: Math.max(0, boardListPageWindowEnd - boardListPageWindowStart + 1) },
-    (_, index) => boardListPageWindowStart + index,
-  );
+  const requestedBoardListPage = boardListPageByTab[boardTab];
+  const boardListPagination = buildPaginationState({
+    currentPage: requestedBoardListPage,
+    totalItems: filteredBoards.length,
+    itemsPerPage: BOARD_LIST_PAGE_SIZE,
+    windowSize: BOARD_LIST_WINDOW_SIZE,
+  });
+  const currentBoardListPage = boardListPagination.currentPage;
+  const boardListTotalPages = boardListPagination.totalPages;
+  const boardListPageNumbers = boardListPagination.pageNumbers;
   const visibleBoards = filteredBoards.slice(
-    (currentBoardListPage - 1) * boardListPageSize,
-    currentBoardListPage * boardListPageSize,
+    (boardListPagination.currentPage - 1) * BOARD_LIST_PAGE_SIZE,
+    boardListPagination.currentPage * BOARD_LIST_PAGE_SIZE,
   );
   const boardListSlots = Array.from(
-    { length: boardListPageSize },
+    { length: BOARD_LIST_PAGE_SIZE },
     (_, index) => visibleBoards[index] ?? null,
   );
   const selectedBoard = useMemo(() => {
@@ -227,8 +225,18 @@ export function BoardPostManager({
 
   useEffect(() => {
     setBoardListPageByTab((prev) => {
-      const activeTotalPages = Math.max(1, Math.ceil(sortedActiveBoards.length / boardListPageSize));
-      const inactiveTotalPages = Math.max(1, Math.ceil(sortedInactiveBoards.length / boardListPageSize));
+      const activeTotalPages = buildPaginationState({
+        currentPage: prev.active ?? 1,
+        totalItems: sortedActiveBoards.length,
+        itemsPerPage: BOARD_LIST_PAGE_SIZE,
+        windowSize: BOARD_LIST_WINDOW_SIZE,
+      }).totalPages;
+      const inactiveTotalPages = buildPaginationState({
+        currentPage: prev.inactive ?? 1,
+        totalItems: sortedInactiveBoards.length,
+        itemsPerPage: BOARD_LIST_PAGE_SIZE,
+        windowSize: BOARD_LIST_WINDOW_SIZE,
+      }).totalPages;
 
       const nextActive = Math.min(prev.active, activeTotalPages);
       const nextInactive = Math.min(prev.inactive, inactiveTotalPages);
@@ -242,16 +250,16 @@ export function BoardPostManager({
         inactive: nextInactive,
       };
     });
-  }, [boardListPageSize, sortedActiveBoards.length, sortedInactiveBoards.length]);
+  }, [sortedActiveBoards.length, sortedInactiveBoards.length]);
 
   useEffect(() => {
     setBoardListPageByTab((prev) => {
-      if (prev[boardTab] <= boardListTotalPages) {
+      if (prev[boardTab] <= boardListPagination.totalPages) {
         return prev;
       }
-      return { ...prev, [boardTab]: boardListTotalPages };
+      return { ...prev, [boardTab]: boardListPagination.totalPages };
     });
-  }, [boardListTotalPages, boardTab]);
+  }, [boardListPagination.totalPages, boardTab]);
 
   useEffect(() => {
     setBoardListPageByTab((prev) => ({ ...prev, [boardTab]: 1 }));
@@ -784,7 +792,7 @@ export function BoardPostManager({
                   [boardTab]: Math.max(1, prev[boardTab] - 1),
                 }))
               }
-              disabled={currentBoardListPage === 1}
+              disabled={!boardListPagination.canGoPrev}
               className="-mr-3 h-14 w-12 shrink-0 rounded-none border-0 bg-transparent text-[1.7rem] font-bold text-slate-400 transition hover:bg-transparent hover:text-white disabled:opacity-20"
               aria-label="이전 게시판 목록"
             >
@@ -834,7 +842,7 @@ export function BoardPostManager({
                   if (board === null) {
                     return (
                       <div
-                        key={`empty-slot-${boardTab}-${currentBoardListPage}-${index}`}
+                        key={`empty-slot-${boardTab}-${boardListPagination.currentPage}-${index}`}
                         aria-hidden="true"
                         className="h-[92px] w-full rounded-lg border border-white/10 bg-black/15"
                       />
@@ -909,10 +917,10 @@ export function BoardPostManager({
               onClick={() =>
                 setBoardListPageByTab((prev) => ({
                   ...prev,
-                  [boardTab]: Math.min(boardListTotalPages, prev[boardTab] + 1),
+                  [boardTab]: Math.min(boardListPagination.totalPages, prev[boardTab] + 1),
                 }))
               }
-              disabled={currentBoardListPage === boardListTotalPages}
+              disabled={!boardListPagination.canGoNext}
               className="-ml-3 h-14 w-12 shrink-0 rounded-none border-0 bg-transparent text-[1.7rem] font-bold text-slate-400 transition hover:bg-transparent hover:text-white disabled:opacity-20"
               aria-label="다음 게시판 목록"
             >
@@ -1113,20 +1121,18 @@ function PostManagerModal({
   const posts = panel?.posts ?? [];
   const [selectedPostIds, setSelectedPostIds] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 6;
   const isBulkMutating = bulkMutatingKey?.startsWith(`${board.id}:${scope}:`) ?? false;
   const allChecked =
     posts.length > 0 && posts.every((post) => selectedPostIds.includes(post.id));
-  const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+  const pagination = buildPaginationState({
+    currentPage,
+    totalItems: posts.length,
+    itemsPerPage: POST_PAGE_SIZE,
+    windowSize: POST_PAGE_WINDOW_SIZE,
+  });
   const currentPagePosts = posts.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
-  const pageBlockStart = Math.floor((currentPage - 1) / 10) * 10 + 1;
-  const pageBlockEnd = Math.min(pageBlockStart + 9, totalPages);
-  const pageNumbers = Array.from(
-    { length: pageBlockEnd - pageBlockStart + 1 },
-    (_, index) => pageBlockStart + index,
+    (pagination.currentPage - 1) * POST_PAGE_SIZE,
+    pagination.currentPage * POST_PAGE_SIZE,
   );
 
   useEffect(() => {
@@ -1138,10 +1144,10 @@ function PostManagerModal({
   }, [scope, board.id]);
 
   useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
+    if (currentPage > pagination.totalPages) {
+      setCurrentPage(pagination.totalPages);
     }
-  }, [currentPage, totalPages]);
+  }, [currentPage, pagination.totalPages]);
 
   function togglePost(postId: number, checked: boolean) {
     setSelectedPostIds((prev) => {
@@ -1418,61 +1424,17 @@ function PostManagerModal({
             })}
           </div>
           {posts.length > 0 && (
-            <div className="mt-4 flex shrink-0 items-center justify-center gap-1">
-              <button
-                type="button"
-                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 10))}
-                disabled={currentPage === 1}
-                className="w-8 rounded-md border border-white/20 py-1 text-xs text-slate-300 transition hover:bg-white/10 disabled:opacity-40"
-                aria-label="10 pages previous"
-              >
-                &laquo;
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className="w-8 rounded-md border border-white/20 py-1 text-xs text-slate-300 transition hover:bg-white/10 disabled:opacity-40"
-                aria-label="previous page"
-              >
-                &lsaquo;
-              </button>
-
-              {pageNumbers.map((pageNumber) => (
-                <button
-                  key={pageNumber}
-                  type="button"
-                  onClick={() => setCurrentPage(pageNumber)}
-                  className={[
-                    "rounded-md border px-2.5 py-1 text-xs font-semibold transition",
-                    pageNumber === currentPage
-                      ? "border-emerald-300/60 bg-emerald-400/20 text-emerald-100"
-                      : "border-white/20 text-slate-300 hover:bg-white/10",
-                  ].join(" ")}
-                >
-                  {pageNumber}
-                </button>
-              ))}
-
-              <button
-                type="button"
-                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                className="w-8 rounded-md border border-white/20 py-1 text-xs text-slate-300 transition hover:bg-white/10 disabled:opacity-40"
-                aria-label="next page"
-              >
-                &rsaquo;
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 10))}
-                disabled={currentPage === totalPages}
-                className="w-8 rounded-md border border-white/20 py-1 text-xs text-slate-300 transition hover:bg-white/10 disabled:opacity-40"
-                aria-label="10 pages next"
-              >
-                &raquo;
-              </button>
-            </div>
+            <PaginationControls
+              mode="button"
+              pagination={pagination}
+              onPageChange={setCurrentPage}
+              className="mt-4 flex shrink-0 items-center justify-center gap-1"
+              pageClassName="rounded-md border px-2.5 py-1 text-xs font-semibold transition"
+              activePageClassName="border-emerald-300/60 bg-emerald-400/20 text-emerald-100"
+              inactivePageClassName="border-white/20 text-slate-300 hover:bg-white/10"
+              navClassName="w-8 rounded-md border border-white/20 py-1 text-xs text-slate-300 transition hover:bg-white/10"
+              navDisabledClassName="w-8 rounded-md border border-white/20 py-1 text-xs text-slate-300 transition hover:bg-white/10 disabled:opacity-40"
+            />
           )}
         </div>
       </div>

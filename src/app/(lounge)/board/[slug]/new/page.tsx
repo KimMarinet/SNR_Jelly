@@ -32,20 +32,7 @@ export default async function BoardPostCreatePage({ params }: BoardPostCreatePag
     redirect(`/board/${slug}`);
   }
 
-  const characters = await prisma.character.findMany({
-    orderBy: [{ name: "asc" }, { id: "asc" }],
-    select: {
-      id: true,
-      name: true,
-      portraitUrl: true,
-      skillOneName: true,
-      skillOneImageUrl: true,
-      skillTwoName: true,
-      skillTwoImageUrl: true,
-      passiveName: true,
-      passiveImageUrl: true,
-    },
-  });
+  const characters = await loadAvailableCharacters();
 
   return (
     <div className="space-y-5">
@@ -66,4 +53,26 @@ export default async function BoardPostCreatePage({ params }: BoardPostCreatePag
       </section>
     </div>
   );
+}
+
+async function loadAvailableCharacters() {
+  try {
+    return await prisma.character.findMany({
+      orderBy: [{ name: "asc" }, { id: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        portraitUrl: true,
+        skillOneName: true,
+        skillOneImageUrl: true,
+        skillTwoName: true,
+        skillTwoImageUrl: true,
+        passiveName: true,
+        passiveImageUrl: true,
+      },
+    });
+  } catch (error) {
+    console.warn("Character table is unavailable. Post combination editor will be empty.", error);
+    return [];
+  }
 }
